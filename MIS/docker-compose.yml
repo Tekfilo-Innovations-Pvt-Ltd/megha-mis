@@ -1,0 +1,22 @@
+services:
+  # MIS has no database of its own — it reads the ERP via DATABASE_URL in
+  # .env.production.
+  app:
+    build:
+      context: .
+    restart: always
+    env_file:
+      - .env.production
+    ports:
+      # Localhost only — put Nginx in front for public traffic.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # Factory price charts + their upload backups. On first start Docker
+      # fills the empty volume with the charts baked into the image.
+      - price-charts:/app/data/price-charts
+      # Ask MIS settings: the encrypted Claude API key and the usage log.
+      - mis-settings:/app/data/settings
+
+volumes:
+  price-charts:
+  mis-settings:

@@ -1,0 +1,3475 @@
+{
+  "code": "w8-gold-2018-12-01",
+  "name": "ADG & RT — Gold labor chart",
+  "factoryLabel": "W8 & W8-1",
+  "metal": "GOLD",
+  "currency": "USD",
+  "effectiveDate": "2018-12-01",
+  "source": {
+    "file": "labor-chart.xls",
+    "sheet": "Labor",
+    "importedAt": "2026-10-22"
+  },
+  "metalChart": {
+    "goldLoss": [
+      {
+        "style": "Normal style",
+        "styleZh": "普通款",
+        "karats": "9K/14K/18K",
+        "pct": 9
+      },
+      {
+        "style": "Wax to gold",
+        "styleZh": "喷蜡款",
+        "karats": "9K/14K/18K",
+        "pct": null
+      }
+    ],
+    "productTypes": [
+      {
+        "code": "RING",
+        "name": "Ring",
+        "nameZh": "介子"
+      },
+      {
+        "code": "EARRINGS",
+        "name": "Earrings",
+        "nameZh": "耳环"
+      },
+      {
+        "code": "STUD",
+        "name": "Stud",
+        "nameZh": "耳钉耳环"
+      },
+      {
+        "code": "PENDANT",
+        "name": "Pendant",
+        "nameZh": "吊咀"
+      },
+      {
+        "code": "PENDANT WITH CHAIN",
+        "name": "Pendant with chain",
+        "nameZh": "项链(链+咀）"
+      },
+      {
+        "code": "BRACELET",
+        "name": "Bracelet",
+        "nameZh": "手链"
+      }
+    ],
+    "chargeTypes": [
+      {
+        "code": "BASIC_UNDER_5",
+        "name": "Basic — under 5 pcs per style",
+        "nameZh": "5件以下",
+        "group": "Basic charge"
+      },
+      {
+        "code": "BASIC_5_UP",
+        "name": "Basic — 5 pcs up per style",
+        "nameZh": "5件以上",
+        "group": "Basic charge"
+      },
+      {
+        "code": "WAX_TO_GOLD",
+        "name": "Wax to gold",
+        "nameZh": "喷蜡款",
+        "group": "Basic charge"
+      },
+      {
+        "code": "J_BACK",
+        "name": "J-back",
+        "nameZh": "网底",
+        "group": "Add-on"
+      },
+      {
+        "code": "SOLDERING",
+        "name": "Soldering",
+        "nameZh": "分件",
+        "group": "Add-on"
+      },
+      {
+        "code": "RHODIUM",
+        "name": "Rhodium",
+        "nameZh": "电白",
+        "group": "Add-on"
+      },
+      {
+        "code": "TWO_TONE",
+        "name": "Two tone",
+        "nameZh": "分色",
+        "group": "Add-on"
+      }
+    ],
+    "weightRanges": [
+      {
+        "id": "RING-1",
+        "productType": "RING",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 3,
+        "note": null
+      },
+      {
+        "id": "RING-2",
+        "productType": "RING",
+        "variant": null,
+        "wtFrom": 3,
+        "wtTo": 7,
+        "note": null
+      },
+      {
+        "id": "RING-3",
+        "productType": "RING",
+        "variant": null,
+        "wtFrom": 7,
+        "wtTo": 11,
+        "note": null
+      },
+      {
+        "id": "RING-4",
+        "productType": "RING",
+        "variant": null,
+        "wtFrom": 11,
+        "wtTo": 17,
+        "note": null
+      },
+      {
+        "id": "RING-5",
+        "productType": "RING",
+        "variant": null,
+        "wtFrom": 17,
+        "wtTo": 23,
+        "note": null
+      },
+      {
+        "id": "EARRINGS-1",
+        "productType": "EARRINGS",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 3,
+        "note": null
+      },
+      {
+        "id": "EARRINGS-2",
+        "productType": "EARRINGS",
+        "variant": null,
+        "wtFrom": 3,
+        "wtTo": 7,
+        "note": null
+      },
+      {
+        "id": "EARRINGS-3",
+        "productType": "EARRINGS",
+        "variant": null,
+        "wtFrom": 7,
+        "wtTo": 11,
+        "note": null
+      },
+      {
+        "id": "EARRINGS-4",
+        "productType": "EARRINGS",
+        "variant": null,
+        "wtFrom": 11,
+        "wtTo": 17,
+        "note": null
+      },
+      {
+        "id": "EARRINGS-5",
+        "productType": "EARRINGS",
+        "variant": null,
+        "wtFrom": 17,
+        "wtTo": 23,
+        "note": null
+      },
+      {
+        "id": "STUD-BUTTERFLY_BACK-1",
+        "productType": "STUD",
+        "variant": "Butterfly back",
+        "wtFrom": 0,
+        "wtTo": null,
+        "note": "As per old labor chart ( In bulk order for fixed price )"
+      },
+      {
+        "id": "STUD-LEVER_BACK-1",
+        "productType": "STUD",
+        "variant": "Lever back",
+        "wtFrom": 0,
+        "wtTo": null,
+        "note": "As per old labor chart ( In bulk order for fixed price )"
+      },
+      {
+        "id": "PENDANT-1",
+        "productType": "PENDANT",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 3,
+        "note": null
+      },
+      {
+        "id": "PENDANT-2",
+        "productType": "PENDANT",
+        "variant": null,
+        "wtFrom": 3,
+        "wtTo": 6,
+        "note": null
+      },
+      {
+        "id": "PENDANT-3",
+        "productType": "PENDANT",
+        "variant": null,
+        "wtFrom": 6,
+        "wtTo": 11,
+        "note": null
+      },
+      {
+        "id": "PENDANT-4",
+        "productType": "PENDANT",
+        "variant": null,
+        "wtFrom": 11,
+        "wtTo": 17,
+        "note": null
+      },
+      {
+        "id": "PENDANT-5",
+        "productType": "PENDANT",
+        "variant": null,
+        "wtFrom": 17,
+        "wtTo": 23,
+        "note": null
+      },
+      {
+        "id": "PENDANT_WITH_CHAIN-1",
+        "productType": "PENDANT WITH CHAIN",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 5,
+        "note": null
+      },
+      {
+        "id": "PENDANT_WITH_CHAIN-2",
+        "productType": "PENDANT WITH CHAIN",
+        "variant": null,
+        "wtFrom": 5,
+        "wtTo": 10,
+        "note": null
+      },
+      {
+        "id": "PENDANT_WITH_CHAIN-3",
+        "productType": "PENDANT WITH CHAIN",
+        "variant": null,
+        "wtFrom": 10,
+        "wtTo": 15,
+        "note": "含15个配件"
+      },
+      {
+        "id": "PENDANT_WITH_CHAIN-4",
+        "productType": "PENDANT WITH CHAIN",
+        "variant": null,
+        "wtFrom": 15,
+        "wtTo": 20,
+        "note": "含15个配件"
+      },
+      {
+        "id": "BRACELET-1",
+        "productType": "BRACELET",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 15,
+        "note": null
+      },
+      {
+        "id": "BRACELET-2",
+        "productType": "BRACELET",
+        "variant": null,
+        "wtFrom": 15,
+        "wtTo": null,
+        "note": null
+      }
+    ],
+    "rates": [
+      {
+        "rangeId": "RING-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 3.8955,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 3.71,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 5.83,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "RHODIUM",
+        "rate": 1.14,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-1",
+        "chargeType": "TWO_TONE",
+        "rate": 2.28,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 4.8405,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 4.61,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 7.51,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "RHODIUM",
+        "rate": 1.32,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "TWO_TONE",
+        "rate": 2.64,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 5.7645,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "BASIC_5_UP",
+        "rate": 5.49,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 9.37,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "RHODIUM",
+        "rate": 1.68,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-3",
+        "chargeType": "TWO_TONE",
+        "rate": 3.36,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 8.6415,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "BASIC_5_UP",
+        "rate": 8.23,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 14.97,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "RHODIUM",
+        "rate": 2.4,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "TWO_TONE",
+        "rate": 4.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 10.8045,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "BASIC_5_UP",
+        "rate": 10.29,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 18.04,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "RHODIUM",
+        "rate": 3.6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-5",
+        "chargeType": "TWO_TONE",
+        "rate": 7.2,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 6.2055,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 5.91,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 9.19,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "J_BACK",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "SOLDERING",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "RHODIUM",
+        "rate": 1.44,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "TWO_TONE",
+        "rate": 2.88,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 6.8565,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 6.53,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 10.66,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "J_BACK",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "SOLDERING",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "RHODIUM",
+        "rate": 1.68,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "TWO_TONE",
+        "rate": 3.36,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 7.686,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "BASIC_5_UP",
+        "rate": 7.32,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 12.53,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "J_BACK",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "SOLDERING",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "RHODIUM",
+        "rate": 2.04,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "TWO_TONE",
+        "rate": 4.08,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 10.794,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "BASIC_5_UP",
+        "rate": 10.28,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 17.7,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "J_BACK",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "SOLDERING",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "RHODIUM",
+        "rate": 3,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "TWO_TONE",
+        "rate": 6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 16.191,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "BASIC_5_UP",
+        "rate": 15.42,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 27.25,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "J_BACK",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "SOLDERING",
+        "rate": 2.27,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "RHODIUM",
+        "rate": 4.2,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "TWO_TONE",
+        "rate": 8.4,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-BUTTERFLY_BACK-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 4.41,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-BUTTERFLY_BACK-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 4.2,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-BUTTERFLY_BACK-1",
+        "chargeType": "RHODIUM",
+        "rate": 1.44,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-BUTTERFLY_BACK-1",
+        "chargeType": "TWO_TONE",
+        "rate": 2.88,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-LEVER_BACK-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 6.615,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-LEVER_BACK-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 6.3,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-LEVER_BACK-1",
+        "chargeType": "RHODIUM",
+        "rate": 1.68,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-LEVER_BACK-1",
+        "chargeType": "TWO_TONE",
+        "rate": 3.36,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 3.297,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 3.14,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 4.97,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "RHODIUM",
+        "rate": 1.14,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-1",
+        "chargeType": "TWO_TONE",
+        "rate": 2.28,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 4.6095,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 4.39,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 7.19,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "RHODIUM",
+        "rate": 1.32,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "TWO_TONE",
+        "rate": 2.64,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 5.4915,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "BASIC_5_UP",
+        "rate": 5.23,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 8.89,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "RHODIUM",
+        "rate": 1.68,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-3",
+        "chargeType": "TWO_TONE",
+        "rate": 3.36,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 8.2215,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "BASIC_5_UP",
+        "rate": 7.83,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 13.98,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "RHODIUM",
+        "rate": 2.4,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "TWO_TONE",
+        "rate": 4.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 10.29,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "BASIC_5_UP",
+        "rate": 9.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 16.95,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "RHODIUM",
+        "rate": 3.6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-5",
+        "chargeType": "TWO_TONE",
+        "rate": 7.2,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 10.815,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 10.3,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 15.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "RHODIUM",
+        "rate": 2.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "TWO_TONE",
+        "rate": 5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 19.53,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 18.6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 28.92,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "RHODIUM",
+        "rate": 4,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "TWO_TONE",
+        "rate": 8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 37.17,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "BASIC_5_UP",
+        "rate": 35.4,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 54.87,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "RHODIUM",
+        "rate": 6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "TWO_TONE",
+        "rate": 12,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 54.1275,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "BASIC_5_UP",
+        "rate": 51.55,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 80.95,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "J_BACK",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "SOLDERING",
+        "rate": 1.13,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "RHODIUM",
+        "rate": 8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "TWO_TONE",
+        "rate": 16,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 13.125,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 12.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 19.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "J_BACK",
+        "rate": 0.35,
+        "unit": "per link"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "SOLDERING",
+        "rate": 2.3,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "RHODIUM",
+        "rate": 2.52,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-1",
+        "chargeType": "TWO_TONE",
+        "rate": 5.04,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 18.039,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 17.18,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "WAX_TO_GOLD",
+        "rate": 27.15,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "SOLDERING",
+        "rate": 2.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "RHODIUM",
+        "rate": 3.6,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "TWO_TONE",
+        "rate": 7.2,
+        "unit": "per pc"
+      }
+    ],
+    "alloy": [
+      {
+        "metal": "Metal",
+        "pricePerGm": 0.35
+      },
+      {
+        "metal": "KWG-9K/10K/14K/18K",
+        "pricePerGm": 0.55
+      },
+      {
+        "metal": "KRG&YG-9K/10K/14K",
+        "pricePerGm": 1.2
+      },
+      {
+        "metal": "KRG&YG-18K",
+        "pricePerGm": 2.1
+      }
+    ],
+    "stamping": [
+      {
+        "stamp": "metal+ADG",
+        "pricePerPc": 0.5
+      },
+      {
+        "stamp": "metal+RT+China",
+        "pricePerPc": 0.5
+      },
+      {
+        "stamp": "metal+ADG+stone weight",
+        "pricePerPc": 0.7
+      },
+      {
+        "stamp": "metal+ADG+ stone weight+UNHEATED",
+        "pricePerPc": 0.7
+      }
+    ],
+    "alloyNotes": [
+      "Nickle Free (不含镍)"
+    ],
+    "modelMaking": {
+      "byStyle": [
+        {
+          "style": "Rings",
+          "min": 60,
+          "max": 120,
+          "remark": "complicated ones not included 不包括复杂款式"
+        },
+        {
+          "style": "Pendant",
+          "min": 55,
+          "max": 120,
+          "remark": "complicated ones not included 不包括复杂款式"
+        },
+        {
+          "style": "Earring",
+          "min": 55,
+          "max": 120,
+          "remark": "complicated ones not included 不包括复杂款式"
+        },
+        {
+          "style": "Bracelet",
+          "min": 100,
+          "max": 200,
+          "remark": "complicated ones not included 不包括复杂款式"
+        },
+        {
+          "style": "Bangle",
+          "min": 100,
+          "max": 200,
+          "remark": "complicated ones not included 不包括复杂款式"
+        },
+        {
+          "style": "Necklace",
+          "min": 150,
+          "max": 300,
+          "remark": "complicated ones not included 不包括复杂款式"
+        }
+      ],
+      "byWeight": {
+        "weightBands": [
+          "Below 3g",
+          "3-5g",
+          "5-8g",
+          "8-10g",
+          "10-15g"
+        ],
+        "rows": [
+          {
+            "style": "3 stone rings & simple designs",
+            "styleZh": "简单戒指款",
+            "rates": [
+              35,
+              40,
+              47,
+              55,
+              65
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          },
+          {
+            "style": "Rings difficlut designs",
+            "styleZh": "复杂戒指款",
+            "rates": [
+              40,
+              50,
+              60,
+              75,
+              90
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          },
+          {
+            "style": "3 stone rings & simple designs",
+            "styleZh": "简单吊咀款",
+            "rates": [
+              30,
+              32,
+              37,
+              50,
+              65
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          },
+          {
+            "style": "Pendants difficlut designs",
+            "styleZh": "复杂吊咀款",
+            "rates": [
+              40,
+              50,
+              60,
+              70,
+              90
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          },
+          {
+            "style": "3 stone earrings & simple designs",
+            "styleZh": "简单耳环款",
+            "rates": [
+              40,
+              45,
+              53,
+              60,
+              75
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          },
+          {
+            "style": "Earrings difficlut designs",
+            "styleZh": "复杂耳环款",
+            "rates": [
+              50,
+              60,
+              75,
+              90,
+              105
+            ],
+            "remark": "complicated ones not included 不包括复杂款式"
+          }
+        ]
+      }
+    }
+  },
+  "settingChart": {
+    "settingTypes": [
+      {
+        "code": "PRONG_PAVE",
+        "name": "Prong/Pave",
+        "nameZh": "爪镶价",
+        "sections": [
+          "SIDE",
+          "CENTER"
+        ],
+        "erpNames": [
+          "PRONG",
+          "PAVE",
+          "MINI PRONG",
+          "SHARE PRONG",
+          "CLAW",
+          "CLAW PRONG",
+          "HAND-PAVE",
+          "PRE-PAVE"
+        ]
+      },
+      {
+        "code": "MICRO_PAVE",
+        "name": "Micro Pave",
+        "nameZh": "手微镶",
+        "sections": [
+          "SIDE",
+          "CENTER"
+        ],
+        "erpNames": [
+          "MICRO PAVE",
+          "MICRO PAVE SET",
+          "PRE MICRO PAVE SET"
+        ]
+      },
+      {
+        "code": "CHANNEL",
+        "name": "Channel",
+        "nameZh": "迫镶",
+        "sections": [
+          "SIDE",
+          "CENTER"
+        ],
+        "erpNames": [
+          "CHANNEL"
+        ]
+      },
+      {
+        "code": "BEZEL",
+        "name": "Bezel",
+        "nameZh": "包镶",
+        "sections": [
+          "SIDE",
+          "CENTER"
+        ],
+        "erpNames": [
+          "BEZEL",
+          "BAZEL",
+          "HALF BAZEL"
+        ]
+      },
+      {
+        "code": "WAX",
+        "name": "Wax setting",
+        "nameZh": "蜡镶",
+        "sections": [
+          "SIDE"
+        ],
+        "erpNames": [
+          "WAX",
+          "WAX SETTING"
+        ]
+      },
+      {
+        "code": "INVISIBLE",
+        "name": "Invisible",
+        "nameZh": "无边镶",
+        "sections": [
+          "SIDE"
+        ],
+        "erpNames": [
+          "INVISIBLE"
+        ]
+      },
+      {
+        "code": "PRESSURE",
+        "name": "Pressure",
+        "nameZh": "爪无边镶",
+        "sections": [
+          "SIDE"
+        ],
+        "erpNames": [
+          "PRESSURE"
+        ]
+      }
+    ],
+    "rateGroups": [
+      {
+        "code": "DIAMOND_ROUND",
+        "section": "SIDE",
+        "name": "Diamond - Round",
+        "nameZh": "钻石--圆形",
+        "shapes": [
+          "ROUND"
+        ],
+        "note": null
+      },
+      {
+        "code": "DIAMOND_FANCY",
+        "section": "SIDE",
+        "name": "Diamond - MQ, TP/BG, PE, CU, OCT, SQ",
+        "nameZh": "钻石--马眼, 梯形, 梨形, 枕形,八角, 正方形",
+        "shapes": [
+          "MARQUISE",
+          "TAPER",
+          "BAGUETTE",
+          "PEAR",
+          "CUSHION",
+          "OCTOGON",
+          "SQUARE"
+        ],
+        "note": null
+      },
+      {
+        "code": "SEMI_PRECIOUS",
+        "section": "CENTER",
+        "name": "RBL, Kynite, Morganite, Aqua, Garnet, Topaz, Blue Zircon, Peridot Green Garnet & semi-precious (round, oval, pear,triangle)",
+        "nameZh": "碧玺, 天然蓝晶, 摩根石, 海蓝宝, 加力, 瑞士蓝, 天然蓝锆等其他天然晶石 (圆形，旦形，梨形，三角形)",
+        "shapes": [
+          "ROUND",
+          "OVAL",
+          "PEAR",
+          "TRIANGLE"
+        ],
+        "note": null
+      },
+      {
+        "code": "RUBY_SAPPHIRE",
+        "section": "CENTER",
+        "name": "Ruby, Sapphire, Fancy Sapphire (round, oval, pear,triangle)",
+        "nameZh": "红宝, 蓝宝, 彩蓝宝 (圆形，旦形，梨形，三角形)",
+        "shapes": [
+          "ROUND",
+          "OVAL",
+          "PEAR",
+          "TRIANGLE"
+        ],
+        "note": null
+      },
+      {
+        "code": "EMERALD_TANZANITE",
+        "section": "CENTER",
+        "name": "Emerald,Tanzanite (round, oval, pear,triangle)",
+        "nameZh": "绿宝, 橄榄石, 绿加力, 坦桑 (圆形，旦形，梨形，三角形)",
+        "shapes": [
+          "ROUND",
+          "OVAL",
+          "PEAR",
+          "TRIANGLE"
+        ],
+        "note": null
+      },
+      {
+        "code": "OPAL",
+        "section": "CENTER",
+        "name": "Opal (round, oval, pear,triangle)",
+        "nameZh": "澳宝 (圆形，旦形，梨形，三角形)",
+        "shapes": [
+          "ROUND",
+          "OVAL",
+          "PEAR",
+          "TRIANGLE"
+        ],
+        "note": "In small size and up to 13x11, Charged TZ labor."
+      }
+    ],
+    "commodities": [
+      {
+        "code": "DIAMOND",
+        "name": "Diamond",
+        "nameZh": "钻石",
+        "rateGroups": [
+          "DIAMOND_ROUND",
+          "DIAMOND_FANCY"
+        ],
+        "match": {
+          "groups": [
+            "DIAMOND",
+            "CERTIFIED DIAMOND",
+            "DIAMOND FANCY",
+            "COL-DIA",
+            "MULTI-DIA"
+          ]
+        }
+      },
+      {
+        "code": "RUBELLITE",
+        "name": "Rubellite (RBL)",
+        "nameZh": "碧玺",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "contains": [
+            "RUBELITE",
+            "RUBELLITE"
+          ]
+        }
+      },
+      {
+        "code": "KYANITE",
+        "name": "Kyanite",
+        "nameZh": "天然蓝晶",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "names": [
+            "KYNITE",
+            "KYANITE"
+          ]
+        }
+      },
+      {
+        "code": "MORGANITE",
+        "name": "Morganite",
+        "nameZh": "摩根石",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "contains": [
+            "MORGANITE"
+          ]
+        }
+      },
+      {
+        "code": "AQUAMARINE",
+        "name": "Aquamarine",
+        "nameZh": "海蓝宝",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "contains": [
+            "AQUAMARINE"
+          ]
+        }
+      },
+      {
+        "code": "GARNET",
+        "name": "Garnet",
+        "nameZh": "加力",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "contains": [
+            "GARNET"
+          ],
+          "groups": [
+            "GARNET"
+          ],
+          "exclude": [
+            "GREEN GARNET"
+          ]
+        }
+      },
+      {
+        "code": "TOPAZ",
+        "name": "Topaz",
+        "nameZh": "瑞士蓝",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "contains": [
+            "TOPAZ"
+          ]
+        }
+      },
+      {
+        "code": "BLUE_ZIRCON",
+        "name": "Blue Zircon",
+        "nameZh": "天然蓝锆",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "names": [
+            "BLUE ZIRCON"
+          ]
+        }
+      },
+      {
+        "code": "OTHER_SEMI_PRECIOUS",
+        "name": "Other semi-precious",
+        "nameZh": "其他天然晶石",
+        "rateGroups": [
+          "SEMI_PRECIOUS"
+        ],
+        "match": {
+          "groups": [
+            "SEMI PRECIOUS STONE"
+          ]
+        }
+      },
+      {
+        "code": "RUBY",
+        "name": "Ruby",
+        "nameZh": "红宝",
+        "rateGroups": [
+          "RUBY_SAPPHIRE"
+        ],
+        "match": {
+          "groups": [
+            "RUBY"
+          ]
+        }
+      },
+      {
+        "code": "SAPPHIRE",
+        "name": "Sapphire",
+        "nameZh": "蓝宝",
+        "rateGroups": [
+          "RUBY_SAPPHIRE"
+        ],
+        "match": {
+          "names": [
+            "SAPPHIRE",
+            "BLUE SAPPHIRE",
+            "CELYON SAPPHIRE"
+          ]
+        }
+      },
+      {
+        "code": "FANCY_SAPPHIRE",
+        "name": "Fancy Sapphire",
+        "nameZh": "彩蓝宝",
+        "rateGroups": [
+          "RUBY_SAPPHIRE"
+        ],
+        "match": {
+          "groups": [
+            "SAPPHIRE"
+          ],
+          "contains": [
+            "SAPPHIRE",
+            "SAPPIRE"
+          ],
+          "exclude": [
+            "LAB GROWN",
+            "LABGROWN",
+            "OREGON"
+          ]
+        }
+      },
+      {
+        "code": "EMERALD",
+        "name": "Emerald",
+        "nameZh": "绿宝",
+        "rateGroups": [
+          "EMERALD_TANZANITE"
+        ],
+        "match": {
+          "names": [
+            "EMERALD"
+          ],
+          "groups": [
+            "EMERALD"
+          ]
+        }
+      },
+      {
+        "code": "PERIDOT",
+        "name": "Peridot",
+        "nameZh": "橄榄石",
+        "rateGroups": [
+          "EMERALD_TANZANITE"
+        ],
+        "match": {
+          "names": [
+            "PERIDOT"
+          ]
+        }
+      },
+      {
+        "code": "GREEN_GARNET",
+        "name": "Green Garnet",
+        "nameZh": "绿加力",
+        "rateGroups": [
+          "EMERALD_TANZANITE"
+        ],
+        "match": {
+          "names": [
+            "GREEN GARNET"
+          ],
+          "contains": [
+            "TSAVORITE",
+            "TASVORITE"
+          ]
+        }
+      },
+      {
+        "code": "TANZANITE",
+        "name": "Tanzanite",
+        "nameZh": "坦桑",
+        "rateGroups": [
+          "EMERALD_TANZANITE"
+        ],
+        "match": {
+          "contains": [
+            "TANZANITE"
+          ],
+          "groups": [
+            "TANZANITE"
+          ],
+          "exclude": [
+            "CUBIC"
+          ]
+        }
+      },
+      {
+        "code": "OPAL",
+        "name": "Opal",
+        "nameZh": "澳宝",
+        "rateGroups": [
+          "OPAL"
+        ],
+        "match": {
+          "contains": [
+            "OPAL"
+          ]
+        }
+      }
+    ],
+    "sizeRanges": [
+      {
+        "id": "DIAMOND_ROUND-1",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0,
+        "wtTo": 0.0155,
+        "sizeMm": "1.5",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-2",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.016,
+        "wtTo": 0.069,
+        "sizeMm": "1.51-2.6",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-3",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.07,
+        "wtTo": 0.099,
+        "sizeMm": "2.61-3.0",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-4",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.1,
+        "wtTo": 0.149,
+        "sizeMm": "3.01-3.5",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-5",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.15,
+        "wtTo": 0.199,
+        "sizeMm": "3.51-3.8",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-6",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.2,
+        "wtTo": 0.299,
+        "sizeMm": "3.81-4.2",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-7",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.3,
+        "wtTo": 0.399,
+        "sizeMm": "4.21-4.7",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-8",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.4,
+        "wtTo": 0.499,
+        "sizeMm": "4.71-5.0",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-9",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.5,
+        "wtTo": 0.599,
+        "sizeMm": "5.1-5.5",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_ROUND-10",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.6,
+        "wtTo": 0.749,
+        "sizeMm": "5.51-5.9",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": "Including cutting charge 含车坑价"
+      },
+      {
+        "id": "DIAMOND_ROUND-11",
+        "rateGroup": "DIAMOND_ROUND",
+        "wtFrom": 0.75,
+        "wtTo": 1,
+        "sizeMm": "6-6.5",
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": "Including cutting charge 含车坑价"
+      },
+      {
+        "id": "DIAMOND_FANCY-1",
+        "rateGroup": "DIAMOND_FANCY",
+        "wtFrom": 0,
+        "wtTo": 0.02,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_FANCY-2",
+        "rateGroup": "DIAMOND_FANCY",
+        "wtFrom": 0.03,
+        "wtTo": 0.1,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_FANCY-3",
+        "rateGroup": "DIAMOND_FANCY",
+        "wtFrom": 0.101,
+        "wtTo": 0.25,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "DIAMOND_FANCY-4",
+        "rateGroup": "DIAMOND_FANCY",
+        "wtFrom": 0.251,
+        "wtTo": 0.299,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-1",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "below 4*3mm //3mm",
+        "mmMax": 4,
+        "mmMaxRound": 3,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-2",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "4.5*3.5-6.5*4.5// 5mm(Rd,Tri,Cu)",
+        "mmMax": 6.5,
+        "mmMaxRound": 5,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-3",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "7*5 //6mm(Rd,Tri,Cu)",
+        "mmMax": 7,
+        "mmMaxRound": 6,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-4",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "8*6,8.5*6.5mm//7mm(Rd,Tri,Cu)",
+        "mmMax": 8.5,
+        "mmMaxRound": 7,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-5",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "9*7,10*8mm/10mm(Rd,Tri,Cu)",
+        "mmMax": 10,
+        "mmMaxRound": 10,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-6",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "11*9-13*11mm//11mm(Rd,Tri,Cu)",
+        "mmMax": 13,
+        "mmMaxRound": 11,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-7",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 8,
+        "wtTo": 9.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-8",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 10,
+        "wtTo": 14.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-9",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 15,
+        "wtTo": 19.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-10",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 20,
+        "wtTo": 24.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-11",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 25,
+        "wtTo": 29.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-12",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 30,
+        "wtTo": 34.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-13",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 35,
+        "wtTo": 39.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-14",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 40,
+        "wtTo": 44.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "SEMI_PRECIOUS-15",
+        "rateGroup": "SEMI_PRECIOUS",
+        "wtFrom": 45,
+        "wtTo": 49.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-1",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "below 4*3mm //3mm",
+        "mmMax": 4,
+        "mmMaxRound": 3,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-2",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "4.5*3.5-6.5*4.5// 5mm(Rd,Tri,Cu)",
+        "mmMax": 6.5,
+        "mmMaxRound": 5,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-3",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "7*5 //6mm(Rd,Tri,Cu)",
+        "mmMax": 7,
+        "mmMaxRound": 6,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-4",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "8*6,8.5*6.5mm//7mm(Rd,Tri,Cu)",
+        "mmMax": 8.5,
+        "mmMaxRound": 7,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-5",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "9*7,10*8mm/10mm(Rd,Tri,Cu)",
+        "mmMax": 10,
+        "mmMaxRound": 10,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-6",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "11*9-13*11mm//11mm(Rd,Tri,Cu)",
+        "mmMax": 13,
+        "mmMaxRound": 11,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-7",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 8,
+        "wtTo": 9.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-8",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 10,
+        "wtTo": 14.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-9",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 15,
+        "wtTo": 19.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-10",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 20,
+        "wtTo": 24.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-11",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 25,
+        "wtTo": 29.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-12",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 30,
+        "wtTo": 34.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-13",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 35,
+        "wtTo": 39.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-14",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 40,
+        "wtTo": 44.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "RUBY_SAPPHIRE-15",
+        "rateGroup": "RUBY_SAPPHIRE",
+        "wtFrom": 45,
+        "wtTo": 49.9,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-1",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "below 4*3mm //3mm",
+        "mmMax": 4,
+        "mmMaxRound": 3,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-2",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "4.5*3.5-6.5*4.5// 5mm(Rd,Tri,Cu)",
+        "mmMax": 6.5,
+        "mmMaxRound": 5,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-3",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "7*5 //6mm(Rd,Tri,Cu)",
+        "mmMax": 7,
+        "mmMaxRound": 6,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-4",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "8*6,8.5*6.5mm//7mm(Rd,Tri,Cu)",
+        "mmMax": 8.5,
+        "mmMaxRound": 7,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-5",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "9*7,10*8mm/10mm(Rd,Tri,Cu)",
+        "mmMax": 10,
+        "mmMaxRound": 10,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-6",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": null,
+        "wtTo": null,
+        "sizeMm": "11*9-13*11mm//11mm(Rd,Tri,Cu)",
+        "mmMax": 13,
+        "mmMaxRound": 11,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-7",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 8,
+        "wtTo": 10,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-8",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 10.01,
+        "wtTo": 15,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-9",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 15.01,
+        "wtTo": 20,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-10",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 20.01,
+        "wtTo": 25,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-11",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 25.01,
+        "wtTo": 30,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-12",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 30.01,
+        "wtTo": 35,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-13",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 35.01,
+        "wtTo": 40,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-14",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 40.01,
+        "wtTo": 45,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "EMERALD_TANZANITE-15",
+        "rateGroup": "EMERALD_TANZANITE",
+        "wtFrom": 45,
+        "wtTo": null,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-1",
+        "rateGroup": "OPAL",
+        "wtFrom": 5.01,
+        "wtTo": 10,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-2",
+        "rateGroup": "OPAL",
+        "wtFrom": 10.01,
+        "wtTo": 15,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-3",
+        "rateGroup": "OPAL",
+        "wtFrom": 15.01,
+        "wtTo": 30,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-4",
+        "rateGroup": "OPAL",
+        "wtFrom": 30.1,
+        "wtTo": 40,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-5",
+        "rateGroup": "OPAL",
+        "wtFrom": 40.1,
+        "wtTo": 50,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      },
+      {
+        "id": "OPAL-6",
+        "rateGroup": "OPAL",
+        "wtFrom": 50,
+        "wtTo": null,
+        "sizeMm": null,
+        "mmMax": null,
+        "mmMaxRound": null,
+        "note": null
+      }
+    ],
+    "rates": [
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.21
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "MICRO_PAVE",
+        "rate": 0.37
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "CHANNEL",
+        "rate": 0.27
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "BEZEL",
+        "rate": 0.27
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "WAX",
+        "rate": 0.11
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "INVISIBLE",
+        "rate": 2.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-1",
+        "settingType": "PRESSURE",
+        "rate": 0.6
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.23
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "MICRO_PAVE",
+        "rate": 0.37
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "CHANNEL",
+        "rate": 0.3
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "BEZEL",
+        "rate": 0.3
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "WAX",
+        "rate": 0.11
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "INVISIBLE",
+        "rate": 2.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-2",
+        "settingType": "PRESSURE",
+        "rate": 0.6
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.31
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-3",
+        "settingType": "MICRO_PAVE",
+        "rate": 0.37
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-3",
+        "settingType": "CHANNEL",
+        "rate": 0.36
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-3",
+        "settingType": "BEZEL",
+        "rate": 0.36
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-3",
+        "settingType": "WAX",
+        "rate": 0.11
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-4",
+        "settingType": "MICRO_PAVE",
+        "rate": 0.45
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-4",
+        "settingType": "CHANNEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-4",
+        "settingType": "BEZEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-4",
+        "settingType": "WAX",
+        "rate": 0.14
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-5",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-5",
+        "settingType": "CHANNEL",
+        "rate": 1.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-5",
+        "settingType": "BEZEL",
+        "rate": 1.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-5",
+        "settingType": "WAX",
+        "rate": 0.2
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-6",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.6
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-7",
+        "settingType": "PRONG_PAVE",
+        "rate": 2.15
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-8",
+        "settingType": "PRONG_PAVE",
+        "rate": 2.75
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-9",
+        "settingType": "PRONG_PAVE",
+        "rate": 3.45
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-10",
+        "settingType": "PRONG_PAVE",
+        "rate": 6
+      },
+      {
+        "rangeId": "DIAMOND_ROUND-11",
+        "settingType": "PRONG_PAVE",
+        "rate": 10
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.26
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-1",
+        "settingType": "CHANNEL",
+        "rate": 0.38
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-1",
+        "settingType": "BEZEL",
+        "rate": 0.38
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.31
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-2",
+        "settingType": "CHANNEL",
+        "rate": 0.43
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-2",
+        "settingType": "BEZEL",
+        "rate": 0.43
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.36
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-3",
+        "settingType": "CHANNEL",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-3",
+        "settingType": "BEZEL",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-4",
+        "settingType": "CHANNEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "DIAMOND_FANCY-4",
+        "settingType": "BEZEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.22
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-1",
+        "settingType": "CHANNEL",
+        "rate": 0.286
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-1",
+        "settingType": "BEZEL",
+        "rate": 0.286
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.25
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-2",
+        "settingType": "CHANNEL",
+        "rate": 0.325
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-2",
+        "settingType": "BEZEL",
+        "rate": 0.325
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.33
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-3",
+        "settingType": "CHANNEL",
+        "rate": 0.429
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-3",
+        "settingType": "BEZEL",
+        "rate": 0.429
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-4",
+        "settingType": "CHANNEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-4",
+        "settingType": "BEZEL",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-5",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.3
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-5",
+        "settingType": "CHANNEL",
+        "rate": 1.69
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-5",
+        "settingType": "BEZEL",
+        "rate": 1.69
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-6",
+        "settingType": "PRONG_PAVE",
+        "rate": 2
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-6",
+        "settingType": "CHANNEL",
+        "rate": 2.6
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-6",
+        "settingType": "BEZEL",
+        "rate": 2.6
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-7",
+        "settingType": "PRONG_PAVE",
+        "rate": 2.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-7",
+        "settingType": "CHANNEL",
+        "rate": 3.25
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-7",
+        "settingType": "BEZEL",
+        "rate": 3.25
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-8",
+        "settingType": "PRONG_PAVE",
+        "rate": 3.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-8",
+        "settingType": "CHANNEL",
+        "rate": 4.55
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-8",
+        "settingType": "BEZEL",
+        "rate": 4.55
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-9",
+        "settingType": "PRONG_PAVE",
+        "rate": 5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-9",
+        "settingType": "CHANNEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-9",
+        "settingType": "BEZEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-10",
+        "settingType": "PRONG_PAVE",
+        "rate": 10
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-10",
+        "settingType": "CHANNEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-10",
+        "settingType": "BEZEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-11",
+        "settingType": "PRONG_PAVE",
+        "rate": 13
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-11",
+        "settingType": "CHANNEL",
+        "rate": 16.9
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-11",
+        "settingType": "BEZEL",
+        "rate": 16.9
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-12",
+        "settingType": "PRONG_PAVE",
+        "rate": 18
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-12",
+        "settingType": "CHANNEL",
+        "rate": 23.4
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-12",
+        "settingType": "BEZEL",
+        "rate": 23.4
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-13",
+        "settingType": "PRONG_PAVE",
+        "rate": 23
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-13",
+        "settingType": "CHANNEL",
+        "rate": 29.9
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-13",
+        "settingType": "BEZEL",
+        "rate": 29.9
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-14",
+        "settingType": "PRONG_PAVE",
+        "rate": 25
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-14",
+        "settingType": "CHANNEL",
+        "rate": 32.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-14",
+        "settingType": "BEZEL",
+        "rate": 32.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-15",
+        "settingType": "PRONG_PAVE",
+        "rate": 35
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-15",
+        "settingType": "CHANNEL",
+        "rate": 45.5
+      },
+      {
+        "rangeId": "SEMI_PRECIOUS-15",
+        "settingType": "BEZEL",
+        "rate": 45.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.25
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-1",
+        "settingType": "CHANNEL",
+        "rate": 0.325
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-1",
+        "settingType": "BEZEL",
+        "rate": 0.325
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.3
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-2",
+        "settingType": "CHANNEL",
+        "rate": 0.39
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-2",
+        "settingType": "BEZEL",
+        "rate": 0.39
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.54
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-3",
+        "settingType": "CHANNEL",
+        "rate": 0.702
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-3",
+        "settingType": "BEZEL",
+        "rate": 0.702
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.1
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-4",
+        "settingType": "CHANNEL",
+        "rate": 1.43
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-4",
+        "settingType": "BEZEL",
+        "rate": 1.43
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-5",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.65
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-5",
+        "settingType": "CHANNEL",
+        "rate": 2.145
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-5",
+        "settingType": "BEZEL",
+        "rate": 2.145
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-6",
+        "settingType": "PRONG_PAVE",
+        "rate": 2.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-6",
+        "settingType": "CHANNEL",
+        "rate": 3.25
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-6",
+        "settingType": "BEZEL",
+        "rate": 3.25
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-7",
+        "settingType": "PRONG_PAVE",
+        "rate": 3
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-7",
+        "settingType": "CHANNEL",
+        "rate": 3.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-7",
+        "settingType": "BEZEL",
+        "rate": 3.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-8",
+        "settingType": "PRONG_PAVE",
+        "rate": 4
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-8",
+        "settingType": "CHANNEL",
+        "rate": 5.2
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-8",
+        "settingType": "BEZEL",
+        "rate": 5.2
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-9",
+        "settingType": "PRONG_PAVE",
+        "rate": 5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-9",
+        "settingType": "CHANNEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-9",
+        "settingType": "BEZEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-10",
+        "settingType": "PRONG_PAVE",
+        "rate": 10
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-10",
+        "settingType": "CHANNEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-10",
+        "settingType": "BEZEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-11",
+        "settingType": "PRONG_PAVE",
+        "rate": 13
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-11",
+        "settingType": "CHANNEL",
+        "rate": 16.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-11",
+        "settingType": "BEZEL",
+        "rate": 16.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-12",
+        "settingType": "PRONG_PAVE",
+        "rate": 18
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-12",
+        "settingType": "CHANNEL",
+        "rate": 23.4
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-12",
+        "settingType": "BEZEL",
+        "rate": 23.4
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-13",
+        "settingType": "PRONG_PAVE",
+        "rate": 23
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-13",
+        "settingType": "CHANNEL",
+        "rate": 29.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-13",
+        "settingType": "BEZEL",
+        "rate": 29.9
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-14",
+        "settingType": "PRONG_PAVE",
+        "rate": 25
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-14",
+        "settingType": "CHANNEL",
+        "rate": 32.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-14",
+        "settingType": "BEZEL",
+        "rate": 32.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-15",
+        "settingType": "PRONG_PAVE",
+        "rate": 35
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-15",
+        "settingType": "CHANNEL",
+        "rate": 45.5
+      },
+      {
+        "rangeId": "RUBY_SAPPHIRE-15",
+        "settingType": "BEZEL",
+        "rate": 45.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.28
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-1",
+        "settingType": "CHANNEL",
+        "rate": 0.45
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-1",
+        "settingType": "BEZEL",
+        "rate": 0.45
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.34
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-2",
+        "settingType": "CHANNEL",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-2",
+        "settingType": "BEZEL",
+        "rate": 0.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 0.65
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-3",
+        "settingType": "CHANNEL",
+        "rate": 1.15
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-3",
+        "settingType": "BEZEL",
+        "rate": 1.15
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 1.3
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-4",
+        "settingType": "CHANNEL",
+        "rate": 2.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-4",
+        "settingType": "BEZEL",
+        "rate": 2.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-5",
+        "settingType": "PRONG_PAVE",
+        "rate": 2
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-5",
+        "settingType": "CHANNEL",
+        "rate": 3
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-5",
+        "settingType": "BEZEL",
+        "rate": 3
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-6",
+        "settingType": "PRONG_PAVE",
+        "rate": 3
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-6",
+        "settingType": "CHANNEL",
+        "rate": 4
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-6",
+        "settingType": "BEZEL",
+        "rate": 4
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-7",
+        "settingType": "PRONG_PAVE",
+        "rate": 3.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-7",
+        "settingType": "CHANNEL",
+        "rate": 4
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-7",
+        "settingType": "BEZEL",
+        "rate": 4
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-8",
+        "settingType": "PRONG_PAVE",
+        "rate": 4.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-8",
+        "settingType": "CHANNEL",
+        "rate": 5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-8",
+        "settingType": "BEZEL",
+        "rate": 5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-9",
+        "settingType": "PRONG_PAVE",
+        "rate": 5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-9",
+        "settingType": "CHANNEL",
+        "rate": 5.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-9",
+        "settingType": "BEZEL",
+        "rate": 5.5
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-10",
+        "settingType": "PRONG_PAVE",
+        "rate": 10
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-10",
+        "settingType": "CHANNEL",
+        "rate": 12
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-10",
+        "settingType": "BEZEL",
+        "rate": 12
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-11",
+        "settingType": "PRONG_PAVE",
+        "rate": 13
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-11",
+        "settingType": "CHANNEL",
+        "rate": 15
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-11",
+        "settingType": "BEZEL",
+        "rate": 15
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-12",
+        "settingType": "PRONG_PAVE",
+        "rate": 18
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-12",
+        "settingType": "CHANNEL",
+        "rate": 20
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-12",
+        "settingType": "BEZEL",
+        "rate": 20
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-13",
+        "settingType": "PRONG_PAVE",
+        "rate": 23
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-13",
+        "settingType": "CHANNEL",
+        "rate": 30
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-13",
+        "settingType": "BEZEL",
+        "rate": 30
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-14",
+        "settingType": "PRONG_PAVE",
+        "rate": 25
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-14",
+        "settingType": "CHANNEL",
+        "rate": 35
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-14",
+        "settingType": "BEZEL",
+        "rate": 35
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-15",
+        "settingType": "PRONG_PAVE",
+        "rate": 35
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-15",
+        "settingType": "CHANNEL",
+        "rate": 45
+      },
+      {
+        "rangeId": "EMERALD_TANZANITE-15",
+        "settingType": "BEZEL",
+        "rate": 45
+      },
+      {
+        "rangeId": "OPAL-1",
+        "settingType": "PRONG_PAVE",
+        "rate": 5
+      },
+      {
+        "rangeId": "OPAL-1",
+        "settingType": "CHANNEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "OPAL-1",
+        "settingType": "BEZEL",
+        "rate": 6.5
+      },
+      {
+        "rangeId": "OPAL-2",
+        "settingType": "PRONG_PAVE",
+        "rate": 7
+      },
+      {
+        "rangeId": "OPAL-2",
+        "settingType": "CHANNEL",
+        "rate": 9.1
+      },
+      {
+        "rangeId": "OPAL-2",
+        "settingType": "BEZEL",
+        "rate": 9.1
+      },
+      {
+        "rangeId": "OPAL-3",
+        "settingType": "PRONG_PAVE",
+        "rate": 10
+      },
+      {
+        "rangeId": "OPAL-3",
+        "settingType": "CHANNEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "OPAL-3",
+        "settingType": "BEZEL",
+        "rate": 13
+      },
+      {
+        "rangeId": "OPAL-4",
+        "settingType": "PRONG_PAVE",
+        "rate": 15
+      },
+      {
+        "rangeId": "OPAL-4",
+        "settingType": "CHANNEL",
+        "rate": 19.5
+      },
+      {
+        "rangeId": "OPAL-4",
+        "settingType": "BEZEL",
+        "rate": 19.5
+      },
+      {
+        "rangeId": "OPAL-5",
+        "settingType": "PRONG_PAVE",
+        "rate": 20
+      },
+      {
+        "rangeId": "OPAL-5",
+        "settingType": "CHANNEL",
+        "rate": 26
+      },
+      {
+        "rangeId": "OPAL-5",
+        "settingType": "BEZEL",
+        "rate": 26
+      },
+      {
+        "rangeId": "OPAL-6",
+        "settingType": "PRONG_PAVE",
+        "rate": 25
+      },
+      {
+        "rangeId": "OPAL-6",
+        "settingType": "CHANNEL",
+        "rate": 32.5
+      },
+      {
+        "rangeId": "OPAL-6",
+        "settingType": "BEZEL",
+        "rate": 32.5
+      }
+    ]
+  }
+}

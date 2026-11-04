@@ -1,0 +1,482 @@
+import {
+  findRange,
+  matchCommodity,
+  metalRateIndex,
+  settingRateIndex,
+  type PriceChart,
+  type SizeRange,
+} from '@/lib/priceChart';
+
+// Applies a factory price chart to one factory-invoice line and compares the
+// labour the factory invoiced with what the chart says it should be.
+//
+//   Metal:   product type + net metal weight per piece → weight range →
+//            Basic (under 5 / 5 pcs up per style, by line qty) and add-ons
+//            (J-back, soldering, rhodium, two-tone) × qty.
+//   Setting: each stone → chart commodity → rate group (by shape) →
+//            size range (consumed carats ÷ consumed pieces, else mm size) →
+//            setting type (the stone's own, else the one named on its invoice
+//            "Setting" labour row, else the default) → rate × pieces.
+//            "Setting" labour rows are assigned to the stone lot they belong
+//            to (see allocateSettingLabour); what can't be tied to one lot
+//            stays a line-level amount.
+//
+// Invoice labour rows are line totals (qty 1, amount for all pieces), so chart
+// amounts are line totals too. Pure — no database access — so it can be
+// unit-tested; src/lib/labourComparisonData.ts loads the invoice lines.
+
+// ---------- input ----------
+
+export interface LineInput {
+  invDetId: number;
+  qty: number; // pieces on the line
+  productType: string | null; // ERP product type name, upper case
+  currency: string;
+  metal: { commodity: string; grams: number; lotCode?: string }[]; // METAL components, net (consumed) grams
+  labour: LabourInput[];
+  stones: StoneInput[];
+}
+
+export interface LabourInput {
+  process: string;
+  amount: number;
+  qty?: number; // as on the labour row — usually 1 (a line total), sometimes the pieces
+  description?: string | null; // factories put the stone lot code or the setting type here
+}
+
+export interface StoneInput {
+  componentId: number;
+  lotCode?: string;
+  masterLotCode?: string;
+  commodity: string; // ERP commodity name, upper case
+  commodityGroup: string;
+  shape: string | null;
+  mmSize: string | null; // as on the invoice, e.g. "10*8" or "1.1"
+  carats: number | null; // consumed carats for the component; null when not weighed in carats
+  pieces: number; // consumed pieces
+  settingType: string | null; // ERP setting type name, upper case
+  settingAmount: number; // setting labour invoiced on the stone itself
+}
+
+export interface ComparisonOptions {
+  defaultSettingType: string; // chart setting type code used when the ERP records none
+  tolerancePct: number; // variance within ±this is "in line"
+}
+
+// ---------- labour process → chart charge ----------
+
+// Chart charge-type codes the invoice labour processes map onto. "BASIC" picks
+// BASIC_UNDER_5 / BASIC_5_UP by quantity.
+export type LabourClass = 'BASIC' | 'J_BACK' | 'SOLDERING' | 'RHODIUM' | 'TWO_TONE' | 'SETTING';
+export const ADD_ONS: LabourClass[] = ['J_BACK', 'SOLDERING', 'RHODIUM', 'TWO_TONE'];
+
+// ERP process names vary ("Basic 胚底", "Basic胚底", "Cover Back 网底", "solder 嵌件"…).
+export function classifyProcess(name: string): LabourClass | null {
+  const n = name.toLowerCase();
+  if (n.includes('+')) return null; // combined rows ("CPF+ Setting + Rhodium", "Basic +CAD new pic") can't be split
+  if (n.includes('setting')) return 'SETTING';
+  if (n.includes('total') || n.includes('总')) return null; // summary rows, e.g. "总胚底Total Basic"
+  if (n.includes('cad')) return null;
+  // CPF (casting, polishing, finishing) is AAA jewelry's basic labour — the ERP's own price chart uses it for metal labour.
+  if (n.includes('basic') || n.includes('胚底') || /\bcpf\b/.test(n)) return 'BASIC';
+  if (n.includes('cover back') || n.includes('coverback') || n.includes('网底') || n.includes('影底')) return 'J_BACK';
+  if (n.includes('solder') || n.includes('嵌件')) return 'SOLDERING';
+  if (n.includes('rhodium')) return 'RHODIUM';
+  if (n.includes('two-tone') || n.includes('two tone') || n.includes('分色')) return 'TWO_TONE';
+  return null;
+}
+
+// ---------- output ----------
+
+export type MetalIssue = 'NO_QTY' | 'NO_METAL' | 'OTHER_METAL' | 'NO_PRODUCT_TYPE' | 'NO_WEIGHT_RANGE' | 'CURRENCY';
+export type StoneIssue = 'NO_COMMODITY' | 'NO_SHAPE' | 'NO_PIECES' | 'NO_SIZE' | 'NO_SETTING_TYPE' | 'NO_RATE' | 'CURRENCY';
+
+export interface ChargeComparison {
+  code: string; // chart charge type code (BASIC_5_UP, J_BACK, …)
+  name: string;
+  invoiced: number;
+  chartRate: number | null;
+  chartAmount: number | null; // rate × qty; null when the chart has no comparable rate
+  note: string | null;
+}
+
+// A charge / the setting counts in the line totals only when it was invoiced.
+export const isComparedCharge = (c: ChargeComparison) => c.chartAmount != null && c.invoiced > 0;
+export const isComparedSetting = (s: SettingComparison) => s.invoiced > 0 && s.chartAmount > 0;
+
+export interface MetalComparison {
+  issue: MetalIssue | null;
+  grams: number;
+  gramsPerPiece: number | null;
+  metals: string[];
+  rangeId: string | null;
+  wtFrom: number | null;
+  wtTo: number | null;
+  variant: string | null; // STUD back type — assumed when the chart has several
+  charges: ChargeComparison[];
+}
+
+export type SettingTypeSource = 'ERP' | 'INVOICE' | 'DEFAULT';
+
+export interface StoneComparison {
+  componentId: number;
+  lotCode: string | null;
+  commodity: string;
+  shape: string | null;
+  pieces: number;
+  carats: number | null;
+  caratsPerStone: number | null;
+  mmSize: string | null;
+  chartCommodity: string | null; // chart commodity code
+  rateGroup: string | null;
+  rangeId: string | null;
+  sizeLabel: string | null; // the chart row used, e.g. "0.10–0.149 ct" or "≤ 10 mm"
+  pricedAsShape?: string; // priced on this shape's chart row instead of its own (e.g. round Ruby as OVAL)
+  settingType: string | null; // chart setting type code
+  settingTypeAssumed: boolean; // the default was used
+  settingTypeSource: SettingTypeSource | null;
+  chartRate: number | null;
+  chartAmount: number | null;
+  invoicedOnStone: number; // setting amount on the stone itself
+  invoicedLabour: number; // "Setting" labour rows assigned to this lot
+  invoiced: number; // both
+  issue: StoneIssue | null;
+}
+
+export interface SettingComparison {
+  invoicedLabour: number; // "Setting" labour rows
+  invoicedOnStones: number; // setting amounts on the stones
+  invoiced: number;
+  chartAmount: number; // sum over stones the chart could price
+  stones: StoneComparison[];
+  // "Setting" labour rows that could not be tied to one lot, and the chart
+  // amount of the stones with no setting invoiced of their own (neither a
+  // labour row nor an amount on the stone).
+  unallocatedLabour: number;
+  unallocatedChart: number;
+  unpricedStones: number;
+  possibleDoubleCharge: boolean; // labour row equals the stones' own setting total
+}
+
+export type LineStatus = 'IN_LINE' | 'OVER' | 'UNDER' | 'NOT_COMPARABLE';
+
+export interface LineComparison {
+  invDetId: number;
+  metal: MetalComparison;
+  setting: SettingComparison;
+  notInChart: { process: string; amount: number }[];
+  invoicedCompared: number; // labour that has a chart counterpart
+  chartTotal: number;
+  variance: number; // invoiced − chart
+  variancePct: number | null;
+  status: LineStatus;
+  partial: boolean; // some invoiced labour or stones could not be priced from the chart
+}
+
+// ---------- helpers ----------
+
+const round = (n: number, dp = 4) => Math.round(n * 10 ** dp) / 10 ** dp;
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+function mmDims(mmSize: string | null): number[] {
+  if (!mmSize) return [];
+  return (mmSize.match(/\d+(?:\.\d+)?/g) ?? []).map(Number).filter((n) => n > 0);
+}
+
+// mm-size rows are listed small → large; a round stone (one dimension) uses
+// the row's round diameter, other stones (and any stone priced as oval) their
+// largest dimension against the oval size.
+function findMmRange(ranges: SizeRange[], mmSize: string | null, asOval = false): SizeRange | undefined {
+  const dims = mmDims(mmSize);
+  if (dims.length === 0) return undefined;
+  const round_ = dims.length === 1 && !asOval;
+  const size = Math.max(...dims);
+  return ranges.find((r) => {
+    const bound = round_ ? (r.mmMaxRound ?? r.mmMax) : r.mmMax;
+    return bound != null && size <= bound;
+  });
+}
+
+const fmt = (n: number) => String(round(n, 4));
+export function sizeLabel(r: SizeRange): string {
+  if (r.wtFrom != null) return r.wtTo == null ? `${fmt(r.wtFrom)} ct and above` : `${fmt(r.wtFrom)}–${fmt(r.wtTo)} ct`;
+  return r.sizeMm ?? `≤ ${r.mmMax} mm`;
+}
+
+// Shapes priced on another shape's chart row, per chart commodity. The user's
+// rule (2026-10-30): Ruby, Sapphire and Fancy Sapphire that is round (RD),
+// triangle (TRI) or cushion (CU) is priced as oval — the Oval column of the
+// Ruby / Sapphire chart.
+const AS_OVAL = { ROUND: 'OVAL', RD: 'OVAL', TRIANGLE: 'OVAL', TRILLION: 'OVAL', TRI: 'OVAL', CUSHION: 'OVAL', CU: 'OVAL' };
+const PRICE_AS_SHAPE: Record<string, Record<string, string>> = {
+  RUBY: AS_OVAL,
+  SAPPHIRE: AS_OVAL,
+  FANCY_SAPPHIRE: AS_OVAL,
+};
+export const pricedAsShape = (chartCommodity: string, shape: string | null) =>
+  (shape && PRICE_AS_SHAPE[chartCommodity]?.[shape]) || null;
+
+// ---------- setting labour → stone lots ----------
+
+// Chart setting types named in a labour description, e.g. "Micro paveProng
+// setting" → MICRO_PAVE + PRONG_PAVE. Longer ERP names are matched first so
+// "MICRO PAVE" is not also read as "PAVE".
+export function settingTypesIn(description: string | null | undefined, chart: PriceChart): string[] {
+  let text = (description ?? '').toUpperCase();
+  if (!text.trim()) return [];
+  const names = chart.settingChart.settingTypes
+    .flatMap((t) => t.erpNames.map((name) => ({ name, code: t.code })))
+    .sort((a, b) => b.name.length - a.name.length);
+  const found = new Set<string>();
+  for (const { name, code } of names) {
+    if (text.includes(name)) {
+      found.add(code);
+      text = text.split(name).join(' ');
+    }
+  }
+  return Array.from(found);
+}
+
+export interface SettingAllocation {
+  byStone: Map<number, LabourInput[]>; // componentId → labour rows
+  unallocated: LabourInput[];
+}
+
+// Ties each "Setting" labour row to the stone lot it was charged for:
+//   1. the description names the lot code (company 10 writes e.g. "RD11500");
+//   2. only one stone lot is left without labour → the remaining rows are its;
+//   3. the row's qty equals the pieces of exactly one remaining lot.
+// Anything else (one row for a whole line of mixed stones) stays unallocated.
+export function allocateSettingLabour(rows: LabourInput[], stones: StoneInput[]): SettingAllocation {
+  const byStone = new Map<number, LabourInput[]>();
+  const give = (s: StoneInput, r: LabourInput) => byStone.set(s.componentId, [...(byStone.get(s.componentId) ?? []), r]);
+  let rest: LabourInput[] = [];
+
+  for (const r of rows) {
+    const desc = (r.description ?? '').toUpperCase();
+    const named = stones
+      .filter((s) => s.lotCode && s.lotCode.length >= 3 && desc.includes(s.lotCode.toUpperCase()))
+      .sort((a, b) => b.lotCode!.length - a.lotCode!.length)[0];
+    if (named) give(named, r);
+    else rest.push(r);
+  }
+
+  const open = stones.filter((s) => !byStone.has(s.componentId));
+  if (rest.length > 0 && open.length === 1) {
+    for (const r of rest) give(open[0], r);
+    rest = [];
+  } else {
+    rest = rest.filter((r) => {
+      const qty = r.qty ?? 1;
+      const match = qty > 1 ? open.filter((s) => s.pieces === qty) : [];
+      if (match.length !== 1) return true;
+      give(match[0], r);
+      return false;
+    });
+  }
+  return { byStone, unallocated: rest };
+}
+
+// ---------- comparison ----------
+
+export function compareLine(line: LineInput, chart: PriceChart, options: ComparisonOptions): LineComparison {
+  const metalRate = metalRateIndex(chart.metalChart);
+  const settingRate = settingRateIndex(chart.settingChart);
+  const chargeName = (code: string) => chart.metalChart.chargeTypes.find((t) => t.code === code)?.name ?? code;
+  const currencyOk = line.currency.toUpperCase() === chart.currency.toUpperCase();
+
+  // Invoiced labour by class.
+  const byClass = new Map<LabourClass, number>();
+  const notInChart: { process: string; amount: number }[] = [];
+  const settingRows: LabourInput[] = [];
+  for (const l of line.labour) {
+    const c = classifyProcess(l.process);
+    if (c) byClass.set(c, (byClass.get(c) ?? 0) + l.amount);
+    else if (l.amount !== 0) notInChart.push({ process: l.process, amount: l.amount });
+    if (c === 'SETTING') settingRows.push(l);
+  }
+
+  // ---- metal ----
+  const grams = sum(line.metal.map((m) => m.grams));
+  const metals = Array.from(new Set(line.metal.map((m) => m.commodity)));
+  const metal: MetalComparison = {
+    issue: null,
+    grams: round(grams),
+    gramsPerPiece: null,
+    metals,
+    rangeId: null,
+    wtFrom: null,
+    wtTo: null,
+    variant: null,
+    charges: [],
+  };
+  const chartMetal = chart.metal.toUpperCase();
+  if (!currencyOk) metal.issue = 'CURRENCY';
+  else if (line.qty <= 0) metal.issue = 'NO_QTY';
+  else if (grams <= 0) metal.issue = 'NO_METAL';
+  else if (!metals.every((m) => m.includes(chartMetal))) metal.issue = 'OTHER_METAL';
+  else if (!line.productType || !chart.metalChart.productTypes.some((p) => p.code === line.productType)) metal.issue = 'NO_PRODUCT_TYPE';
+  else {
+    metal.gramsPerPiece = round(grams / line.qty);
+    const ranges = chart.metalChart.weightRanges.filter((r) => r.productType === line.productType);
+    // STUD has one row per back type; the invoice doesn't say which — use the first.
+    const variant = ranges[0]?.variant ?? null;
+    const range = findRange(ranges.filter((r) => r.variant === variant), metal.gramsPerPiece);
+    if (!range) metal.issue = 'NO_WEIGHT_RANGE';
+    else {
+      Object.assign(metal, { rangeId: range.id, wtFrom: range.wtFrom, wtTo: range.wtTo, variant });
+      const basicCode = line.qty < 5 ? 'BASIC_UNDER_5' : 'BASIC_5_UP';
+      const charge = (code: string, invoiced: number): ChargeComparison => {
+        const r = metalRate(range.id, code);
+        const perPiece = r && r.unit === 'per pc';
+        return {
+          code,
+          name: chargeName(code),
+          invoiced: round(invoiced),
+          chartRate: r?.rate ?? null,
+          chartAmount: perPiece ? round(r.rate * line.qty) : null,
+          note: !r ? 'No chart rate for this weight range' : perPiece ? null : `Chart rate is ${r.unit} — not comparable`,
+        };
+      };
+      metal.charges.push(charge(basicCode, byClass.get('BASIC') ?? 0));
+      for (const c of ADD_ONS) {
+        const invoiced = byClass.get(c) ?? 0;
+        if (invoiced !== 0) metal.charges.push(charge(c, invoiced));
+      }
+    }
+  }
+  if (metal.issue) {
+    // Keep invoiced metal labour visible even when the chart can't price it.
+    for (const c of ['BASIC' as LabourClass, ...ADD_ONS]) {
+      const invoiced = byClass.get(c) ?? 0;
+      if (invoiced !== 0) metal.charges.push({ code: c, name: c === 'BASIC' ? 'Basic' : chargeName(c), invoiced: round(invoiced), chartRate: null, chartAmount: null, note: null });
+    }
+  }
+
+  // ---- setting ----
+  const allocation = allocateSettingLabour(settingRows, line.stones);
+  // A setting type named on the line's unallocated rows applies to its other
+  // stones only when those rows name exactly one type.
+  const lineTypes = Array.from(new Set(allocation.unallocated.flatMap((r) => settingTypesIn(r.description, chart))));
+  const stones: StoneComparison[] = line.stones.map((s) => {
+    const own = allocation.byStone.get(s.componentId) ?? [];
+    const ownTypes = Array.from(new Set(own.flatMap((r) => settingTypesIn(r.description, chart))));
+    const invoiceType = own.length > 0 ? (ownTypes.length === 1 ? ownTypes[0] : null) : lineTypes.length === 1 ? lineTypes[0] : null;
+    const invoicedLabour = round(sum(own.map((r) => r.amount)));
+    const out: StoneComparison = {
+      componentId: s.componentId,
+      lotCode: s.lotCode ?? null,
+      commodity: s.commodity,
+      shape: s.shape,
+      pieces: s.pieces,
+      carats: s.carats,
+      caratsPerStone: s.pieces > 0 && s.carats != null ? round(s.carats / s.pieces) : null,
+      mmSize: s.mmSize,
+      chartCommodity: null,
+      rateGroup: null,
+      rangeId: null,
+      sizeLabel: null,
+      settingType: null,
+      settingTypeAssumed: false,
+      settingTypeSource: null,
+      chartRate: null,
+      chartAmount: null,
+      invoicedOnStone: round(s.settingAmount),
+      invoicedLabour,
+      invoiced: round(s.settingAmount + invoicedLabour),
+      issue: null,
+    };
+    const commodity = matchCommodity(chart.settingChart.commodities, s.commodity, s.commodityGroup);
+    if (!commodity) return { ...out, issue: 'NO_COMMODITY' };
+    out.chartCommodity = commodity.code;
+    const groups = commodity.rateGroups.map((code) => chart.settingChart.rateGroups.find((g) => g.code === code)!).filter(Boolean);
+    const asShape = pricedAsShape(commodity.code, s.shape);
+    if (asShape) out.pricedAsShape = asShape;
+    const shape = asShape ?? s.shape;
+    const group = groups.find((g) => shape != null && g.shapes.includes(shape));
+    if (!group) return { ...out, issue: 'NO_SHAPE' };
+    out.rateGroup = group.code;
+    if (!currencyOk) return { ...out, issue: 'CURRENCY' };
+    if (s.pieces <= 0) return { ...out, issue: 'NO_PIECES' };
+
+    const ranges = chart.settingChart.sizeRanges.filter((r) => r.rateGroup === group.code);
+    const range =
+      (out.caratsPerStone != null ? findRange(ranges.filter((r) => r.wtFrom != null), out.caratsPerStone) : undefined) ??
+      findMmRange(ranges.filter((r) => r.wtFrom == null), s.mmSize, asShape === 'OVAL');
+    if (!range) return { ...out, issue: 'NO_SIZE' };
+    out.rangeId = range.id;
+    out.sizeLabel = sizeLabel(range);
+
+    const types = chart.settingChart.settingTypes.filter((t) => t.sections.includes(group.section));
+    const source: SettingTypeSource = s.settingType ? 'ERP' : invoiceType ? 'INVOICE' : 'DEFAULT';
+    const type =
+      source === 'ERP'
+        ? types.find((t) => t.erpNames.includes(s.settingType!))
+        : types.find((t) => t.code === (source === 'INVOICE' ? invoiceType : options.defaultSettingType));
+    if (!type) return { ...out, settingTypeSource: source, issue: 'NO_SETTING_TYPE' };
+    out.settingType = type.code;
+    out.settingTypeSource = source;
+    out.settingTypeAssumed = source === 'DEFAULT';
+
+    const rate = settingRate(range.id, type.code);
+    if (rate == null) return { ...out, issue: 'NO_RATE' };
+    return { ...out, chartRate: rate, chartAmount: round(rate * s.pieces) };
+  });
+
+  const invoicedLabour = round(byClass.get('SETTING') ?? 0);
+  const invoicedOnStones = round(sum(line.stones.map((s) => s.settingAmount)));
+  const setting: SettingComparison = {
+    invoicedLabour,
+    invoicedOnStones,
+    invoiced: round(invoicedLabour + invoicedOnStones),
+    chartAmount: round(sum(stones.map((s) => s.chartAmount ?? 0))),
+    stones,
+    unpricedStones: stones.filter((s) => s.issue).length,
+    unallocatedLabour: round(sum(allocation.unallocated.map((r) => r.amount))),
+    unallocatedChart: round(sum(stones.filter((s) => s.invoiced === 0).map((s) => s.chartAmount ?? 0))),
+    possibleDoubleCharge: invoicedLabour > 0 && invoicedOnStones > 0 && Math.abs(invoicedLabour - invoicedOnStones) < 0.01,
+  };
+
+  // ---- line totals ----
+  // Only labour the factory actually charged is compared: a chart amount with
+  // nothing invoiced (e.g. setting billed on another line) is shown, not counted.
+  const comparableCharges = metal.charges.filter(isComparedCharge);
+  const settingComparable = isComparedSetting(setting);
+  const invoicedCompared = round(sum(comparableCharges.map((c) => c.invoiced)) + (settingComparable ? setting.invoiced : 0));
+  const chartTotal = round(sum(comparableCharges.map((c) => c.chartAmount!)) + (settingComparable ? setting.chartAmount : 0));
+  const variance = round(invoicedCompared - chartTotal, 2);
+  const variancePct = chartTotal > 0 ? round((variance / chartTotal) * 100, 1) : null;
+
+  const uncomparedInvoiced =
+    metal.charges.some((c) => c.chartAmount == null && c.invoiced !== 0) || (setting.invoiced > 0 && !settingComparable);
+  const partial = uncomparedInvoiced || setting.unpricedStones > 0;
+  const status: LineStatus =
+    chartTotal <= 0
+      ? 'NOT_COMPARABLE'
+      : Math.abs(variancePct!) <= options.tolerancePct
+        ? 'IN_LINE'
+        : variance > 0
+          ? 'OVER'
+          : 'UNDER';
+
+  return { invDetId: line.invDetId, metal, setting, notInChart, invoicedCompared, chartTotal, variance, variancePct, status, partial };
+}
+
+export const METAL_ISSUE_TEXT: Record<MetalIssue, string> = {
+  NO_QTY: 'Line has no quantity',
+  NO_METAL: 'No metal weight on the line',
+  OTHER_METAL: 'Metal is not covered by this chart',
+  NO_PRODUCT_TYPE: 'Product type is not in the chart',
+  NO_WEIGHT_RANGE: 'Weight per piece is outside the chart’s ranges',
+  CURRENCY: 'Invoice currency differs from the chart',
+};
+
+export const STONE_ISSUE_TEXT: Record<StoneIssue, string> = {
+  NO_COMMODITY: 'Commodity not in the chart',
+  NO_SHAPE: 'Shape not priced for this commodity',
+  NO_PIECES: 'No piece count',
+  NO_SIZE: 'Size outside the chart',
+  NO_SETTING_TYPE: 'Setting type not in the chart',
+  NO_RATE: 'No chart rate for this setting type and size',
+  CURRENCY: 'Invoice currency differs from the chart',
+};

@@ -1,0 +1,16 @@
+# Files the Vercel CLI must not upload. Vercel builds from source and sets
+# its own environment variables, so local secrets and build output stay here.
+node_modules
+.next
+.env*
+!.env.example
+*.tsbuildinfo
+/src/generated
+/data/price-charts/backups/
+# Ask MIS settings (encrypted Claude API key) and usage log
+/data/settings/
+.claude/
+*.sql
+Dockerfile
+docker-compose*.yml
+entrypoint.sh
