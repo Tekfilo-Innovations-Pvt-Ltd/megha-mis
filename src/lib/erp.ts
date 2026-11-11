@@ -19,11 +19,11 @@ const WRITE_OPERATIONS = new Set([
 ]);
 
 function createErpClient() {
-  const base = new PrismaClient(
-    process.env.DATABASE_URL
-      ? undefined
-      : { datasources: { db: { url: 'postgresql://tenantb8278d:TekFilo%232021@13.127.119.227:5432/devmegha' } } }
-  );
+  // No fallback URL: credentials belong in .env, never in source.
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set — add the ERP connection string to .env (see .env.example)');
+  }
+  const base = new PrismaClient();
   return base.$extends({
     query: {
       $allOperations({ operation, model, args, query }) {
