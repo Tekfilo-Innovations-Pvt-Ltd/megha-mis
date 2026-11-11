@@ -10,6 +10,7 @@ import JobWorkTable from '@/components/labour/JobWorkTable';
 import LotDetailTable from '@/components/labour/LotDetailTable';
 import SkuTable from '@/components/labour/SkuTable';
 import ChartAmount from '@/components/labour/ChartAmount';
+import StoneCorrectionsBar from '@/components/labour/StoneCorrectionsBar';
 import type { ChartCalc, LineCalcs } from '@/lib/chartCalc';
 import type { LabourReport, LotReport, ReportSort, ReportStatusFilter } from '@/lib/labourReport';
 import type { LineComparison } from '@/lib/labourComparison';
@@ -268,7 +269,9 @@ export default function LabourVsChartPage() {
         </p>
       </div>
 
-      {report.isError && <p className="text-sm text-red-600">{(report.error as Error).message}</p>}
+      <StoneCorrectionsBar />
+
+      {report.isError &&<p className="text-sm text-red-600">{(report.error as Error).message}</p>}
       {report.isLoading && <p className="text-sm text-slate-500">Comparing invoice lines with the chart…</p>}
 
       {/* Summary — folded by default; the same filters apply to it and to every tab */}

@@ -210,6 +210,16 @@ describe('Ruby and Sapphire priced as oval', () => {
     expect(priced({ commodity: 'BLUE SAPPHIRE', commodityGroup: 'PRECIOUS STONE', shape: 'CUSHION', mmSize: '9.23*7.84' })).toMatchObject({ rangeId: 'RUBY_SAPPHIRE-5', issue: null });
   });
 
+  it('prices cushion and trillion colour stones as oval, but not diamonds or round colour stones', () => {
+    const tz = { commodity: 'TANZANITE', commodityGroup: 'TANZANITE', mmSize: '8x6' };
+    const oval = priced({ ...tz, shape: 'OVAL' });
+    expect(oval.chartAmount).not.toBeNull();
+    expect(priced({ ...tz, shape: 'CUSHION' })).toMatchObject({ rangeId: oval.rangeId, pricedAsShape: 'OVAL', issue: null });
+    expect(priced({ ...tz, shape: 'TRILLION' })).toMatchObject({ rangeId: oval.rangeId, pricedAsShape: 'OVAL', issue: null });
+    expect(priced({ ...tz, shape: 'ROUND', mmSize: '6' }).pricedAsShape).toBeUndefined();
+    expect(priced({ commodity: 'DIAMOND', commodityGroup: 'DIAMOND', shape: 'CUSHION', carats: 0.1 }).pricedAsShape).toBeUndefined();
+  });
+
   it('leaves oval Ruby as it was', () => {
     expect(priced({ commodity: 'RUBY', commodityGroup: 'RUBY', shape: 'OVAL', mmSize: '7x5' })).toMatchObject({ rangeId: 'RUBY_SAPPHIRE-3' });
     expect(priced({ commodity: 'RUBY', commodityGroup: 'RUBY', shape: 'OVAL', mmSize: '7x5' }).pricedAsShape).toBeUndefined();

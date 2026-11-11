@@ -16,7 +16,10 @@ services:
       - price-charts:/app/data/price-charts
       # Ask MIS settings: the encrypted Claude API key and the usage log.
       - mis-settings:/app/data/settings
+      # Customer stone corrections (shape / MM) for Labour vs Chart, per company.
+      - stone-corrections:/app/data/stone-corrections
 
 volumes:
   price-charts:
   mis-settings:
+  stone-corrections:

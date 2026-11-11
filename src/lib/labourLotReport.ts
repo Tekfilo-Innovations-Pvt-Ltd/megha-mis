@@ -11,6 +11,7 @@ import {
 } from '@/lib/labourComparison';
 import type { LineInfo } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
+import { correctionText } from '@/lib/stoneCorrections';
 import { chargePart, chartCalc, stonePart, sumCalcs, type ChartCalc, type ChartCalcPart } from '@/lib/chartCalc';
 
 // "Labour vs Chart — lot detail": one row per lot (metal charge, stone lot)
@@ -65,7 +66,8 @@ export type LotNoteCode =
   | 'LINE_AVERAGE'
   | 'LINE_EXTRA'
   | 'NOT_IN_CHART'
-  | 'EMPTY_LINE';
+  | 'EMPTY_LINE'
+  | 'CUSTOMER_CORRECTED';
 
 export interface LotNote {
   code: LotNoteCode;
@@ -217,7 +219,7 @@ const NOTES: Record<Exclude<LotNoteCode, `METAL_${string}` | `STONE_${string}`>,
   NOT_INVOICED: { short: 'Not invoiced', text: 'No metal labour invoiced' },
   TYPE_DEFAULT: { short: 'Default type', text: 'Setting type not recorded — default used' },
   TYPE_INVOICE: { short: 'Type from invoice', text: 'Setting type from the invoice labour description' },
-  PRICED_AS_OVAL: { short: 'Priced as oval', text: 'Round / triangle / cushion Ruby or Sapphire priced on the Oval column of the chart' },
+  PRICED_AS_OVAL: { short: 'Priced as oval', text: 'Priced on the Oval column of the chart: round / triangle / cushion Ruby or Sapphire, cushion / trillion colour stones' },
   BILLED_ON_LINE: { short: 'Billed on line', text: 'Invoiced in the line-level setting row' },
   LINE_AVERAGE: { short: 'Avg per stone', text: 'Invoice setting labour not tied to one lot — rates are averages per stone' },
   LINE_EXTRA: {
@@ -226,6 +228,7 @@ const NOTES: Record<Exclude<LotNoteCode, `METAL_${string}` | `STONE_${string}`>,
   },
   NOT_IN_CHART: { short: 'Not in chart', text: 'The chart has no rate for this labour' },
   EMPTY_LINE: { short: 'Nothing to compare', text: 'No metal weight, stones or labour on this line' },
+  CUSTOMER_CORRECTED: { short: 'Customer correction', text: 'Shape / MM size from the customer stone sheet' },
 };
 
 const note = (code: keyof typeof NOTES): LotNote => ({ code, ...NOTES[code] });
@@ -371,14 +374,15 @@ export function buildLotGroup(info: LineInfo, input: LineInput, c: LineCompariso
   const hasLineSetting = c.setting.unallocatedLabour !== 0;
   const stoneRows: LotRow[] = c.setting.stones.map((st) => {
     const own = st.invoiced !== 0;
+    const s = groupOf.get(st.componentId);
     const notes = [
+      s?.corrected ? { ...note('CUSTOMER_CORRECTED'), text: `Customer stone sheet: ${correctionText(s.corrected)} (ERP value replaced)` } : null,
       st.issue ? stoneNote(st.issue) : null,
       st.settingTypeSource === 'DEFAULT' ? note('TYPE_DEFAULT') : null,
       st.settingTypeSource === 'INVOICE' ? note('TYPE_INVOICE') : null,
       st.pricedAsShape === 'OVAL' ? note('PRICED_AS_OVAL') : null,
       !own && hasLineSetting ? note('BILLED_ON_LINE') : null,
     ].filter((n): n is LotNote => n != null);
-    const s = groupOf.get(st.componentId);
     return {
       kind: 'SETTING',
       settingOnStone: st.invoicedOnStone,

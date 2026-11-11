@@ -1,5 +1,7 @@
 import erp from '@/lib/erp';
 import type { LineInput, StoneInput } from '@/lib/labourComparison';
+import { applyStoneCorrections } from '@/lib/stoneCorrections';
+import { getStoneCorrections } from '@/lib/stoneCorrectionsStore';
 
 // Loads factory-invoice lines in the shape src/lib/labourComparison.ts needs,
 // in four set-based queries (lines, metal, labour, stones) rather than one per
@@ -20,6 +22,7 @@ export interface LineFilter {
   invId?: number;
   invIds?: number[];
   invDetId?: number;
+  erpStoneDetails?: boolean; // ignore the customer's stone corrections — shape / MM size as in the ERP
 }
 
 export interface LineInfo {
@@ -239,6 +242,12 @@ export async function loadComparisonLines(filter: LineFilter): Promise<{ info: M
       ),
     };
   });
+
+  // The customer's corrected shape / MM size replace the ERP's (when uploaded).
+  if (!filter.erpStoneDetails) {
+    const corrections = await getStoneCorrections(filter.companyId);
+    if (corrections) applyStoneCorrections(lines, (id) => info.get(id), corrections);
+  }
 
   return { info, lines };
 }

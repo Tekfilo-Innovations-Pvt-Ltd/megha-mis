@@ -41,7 +41,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 # Ask MIS settings (encrypted Claude API key, usage log) — its own volume;
 # created here so the volume is writable by the app user.
-RUN mkdir -p ./data/settings && chown nextjs:nodejs ./data/settings
+RUN mkdir -p ./data/settings ./data/stone-corrections && chown nextjs:nodejs ./data/settings ./data/stone-corrections
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh && chown nextjs:nodejs ./entrypoint.sh

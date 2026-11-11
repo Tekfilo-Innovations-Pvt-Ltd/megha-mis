@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Ask MIS settings (encrypted Claude API key) and usage log
 /data/settings/
+
+# Customer stone corrections uploaded on Labour vs Chart — server data, not source
+/data/stone-corrections/

@@ -56,6 +56,12 @@ export interface StoneInput {
   pieces: number; // consumed pieces
   settingType: string | null; // ERP setting type name, upper case
   settingAmount: number; // setting labour invoiced on the stone itself
+  // shape / mmSize replaced by the customer's stone corrections (src/lib/stoneCorrections.ts)
+  corrected?: {
+    source: 'STONE' | 'LOT';
+    shape?: { erp: string | null; customer: string };
+    mmSize?: { erp: string | null; customer: string };
+  };
 }
 
 export interface ComparisonOptions {
@@ -213,8 +219,12 @@ const PRICE_AS_SHAPE: Record<string, Record<string, string>> = {
   SAPPHIRE: AS_OVAL,
   FANCY_SAPPHIRE: AS_OVAL,
 };
+// The user's rule (2026-11-10): every other colour stone (all chart
+// commodities but Diamond, whose fancy group prices cushion itself) that is
+// cushion (CU) or trillion is priced as oval too. Triangle keeps its own column.
+const CU_TRILLION_AS_OVAL = { CUSHION: 'OVAL', CU: 'OVAL', TRILLION: 'OVAL' };
 export const pricedAsShape = (chartCommodity: string, shape: string | null) =>
-  (shape && PRICE_AS_SHAPE[chartCommodity]?.[shape]) || null;
+  (shape && (PRICE_AS_SHAPE[chartCommodity] ?? (chartCommodity === 'DIAMOND' ? undefined : CU_TRILLION_AS_OVAL))?.[shape]) || null;
 
 // ---------- setting labour → stone lots ----------
 
