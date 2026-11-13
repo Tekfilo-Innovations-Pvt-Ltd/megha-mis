@@ -52,7 +52,10 @@ export function chargePart(ch: ChargeComparison, c: LineComparison, line: Pick<L
   const m = c.metal;
   const steps: ChartCalcStep[] = [
     { label: 'Product type', value: line.productType ?? '—' },
-    { label: 'Net metal weight', value: `${n(m.grams, 3, 3)} g${m.metals.length ? ` (${m.metals.join(', ')})` : ''}` },
+    {
+      label: 'Net metal weight',
+      value: `${n(m.grams, 3, 3)} g${m.metals.length ? ` (${m.metals.join(', ')})` : ''}${m.hardwareMetals?.length ? ` — ${m.hardwareMetals.join(', ').toLowerCase()} not counted` : ''}`,
+    },
     { label: 'Weight per piece', value: `${n(m.grams, 3, 3)} g ÷ ${pcs(line.qty)} = ${n(m.gramsPerPiece, 3, 4)} g/pc` },
     {
       label: 'Chart weight range',

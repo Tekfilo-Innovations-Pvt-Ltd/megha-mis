@@ -121,6 +121,27 @@ describe('compareLine', () => {
     expect(line({ commodity: 'LAB GROWN DIAMOND', commodityGroup: 'LAB GROWN', carats: 0.01, pieces: 1 })).toMatchObject({ chartCommodity: 'DIAMOND', rateGroup: 'DIAMOND_ROUND', issue: null });
   });
 
+  it('prices an AAA bangle: titanium wire not weighed, rhodium on the Plating rate', () => {
+    const bangle: LineInput = {
+      ...ringLine,
+      qty: 1,
+      productType: 'BANGLE',
+      metal: [{ commodity: 'GOLD', grams: 14.2 }, { commodity: 'TITANIUM WIRE', grams: 1.1 }],
+      labour: [{ process: 'CPF', amount: 31 }, { process: 'rhodium', amount: 4 }],
+      stones: [],
+    };
+    const r = compareLine(bangle, chart, options);
+    expect(r.metal).toMatchObject({ issue: null, grams: 14.2, metals: ['GOLD'], hardwareMetals: ['TITANIUM WIRE'], wtFrom: 0, wtTo: 15 });
+    expect(r.metal.charges).toMatchObject([
+      { code: 'BASIC_UNDER_5', labourClass: 'BASIC', chartRate: 13.6563 },
+      { code: 'PLATING', labourClass: 'RHODIUM', chartRate: 3.2319 },
+    ]);
+  });
+
+  it('still refuses silver lines', () => {
+    expect(compareLine({ ...ringLine, metal: [{ commodity: 'GOLD', grams: 5 }, { commodity: 'SILVER', grams: 5 }] }, chart, options).metal.issue).toBe('OTHER_METAL');
+  });
+
   it('uses the under-5 price below 5 pieces', () => {
     const r = compareLine({ ...ringLine, qty: 4, metal: [{ commodity: 'GOLD', grams: 9.3386 }] }, chart, options);
     expect(r.metal.charges[0]).toMatchObject({ code: 'BASIC_UNDER_5', chartRate: 3.8955, chartAmount: 15.582 });

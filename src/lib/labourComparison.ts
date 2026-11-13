@@ -91,7 +91,17 @@ export const ADD_ONS: LabourClass[] = ['COVER_BACK', 'J_BACK', 'SOLDERING', 'RHO
 // Cover back (网底) was priced on the chart's J-back column before the chart had
 // its own Cover back charge (added for BANGLE from the Labour Bangle sheet,
 // 2026-11-13); ranges without a Cover back rate still use J-back.
-const CHART_CHARGES: Partial<Record<LabourClass, string[]>> = { COVER_BACK: ['COVER_BACK', 'J_BACK'] };
+// Rhodium is priced on the Plating column where a range has no Rhodium rate:
+// Wilson's bangle sheet bills rhodium plating as "Plating", AAA as "rhodium".
+// (Not the reverse — plating on other product types stays "not in chart".)
+const CHART_CHARGES: Partial<Record<LabourClass, string[]>> = {
+  COVER_BACK: ['COVER_BACK', 'J_BACK'],
+  RHODIUM: ['RHODIUM', 'PLATING'],
+};
+
+// Non-precious metal parts (spring wire, steel posts) — not what a gold
+// labour chart prices by weight.
+export const isHardwareMetal = (commodity: string) => /TITANIUM|STEEL/.test(commodity.toUpperCase());
 const chartChargesOf = (cls: LabourClass) => CHART_CHARGES[cls] ?? [cls];
 
 // Plating and laser stamping are on nearly every ERP line but only some
@@ -142,7 +152,8 @@ export interface MetalComparison {
   issue: MetalIssue | null;
   grams: number;
   gramsPerPiece: number | null;
-  metals: string[];
+  metals: string[]; // metals weighed for the chart
+  hardwareMetals?: string[]; // left out of the weight (see isHardwareMetal)
   rangeId: string | null;
   wtFrom: number | null;
   wtTo: number | null;
@@ -349,13 +360,18 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
   };
 
   // ---- metal ----
-  const grams = sum(line.metal.map((m) => m.grams));
-  const metals = Array.from(new Set(line.metal.map((m) => m.commodity)));
+  // Hardware (e.g. AAA bangles' titanium spring wire) is neither priced nor
+  // weighed by the chart: it doesn't block the line or count in the weight.
+  const counted = line.metal.filter((m) => !isHardwareMetal(m.commodity));
+  const grams = sum(counted.map((m) => m.grams));
+  const metals = Array.from(new Set(counted.map((m) => m.commodity)));
+  const hardware = Array.from(new Set(line.metal.filter((m) => isHardwareMetal(m.commodity)).map((m) => m.commodity)));
   const metal: MetalComparison = {
     issue: null,
     grams: round(grams),
     gramsPerPiece: null,
     metals,
+    ...(hardware.length ? { hardwareMetals: hardware } : {}),
     rangeId: null,
     wtFrom: null,
     wtTo: null,
