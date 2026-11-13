@@ -170,6 +170,36 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
         )}
       </section>
 
+      {(comparison.combined?.length ?? 0) + (comparison.modelMaking?.length ?? 0) > 0 && (
+        <section>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1">Combined rows and CAD</h4>
+          <table className="text-sm">
+            <tbody className="divide-y divide-slate-100">
+              {comparison.combined?.map((x) => (
+                <tr key={x.process}>
+                  <td className="pr-4 py-1">{x.process}</td>
+                  <td className="pr-4 py-1 text-right tabular-nums">{fmtNum(x.invoiced)}</td>
+                  <td className="pr-4 py-1 text-right tabular-nums">
+                    vs chart <ChartAmount value={x.chartAmount} calc={calcs?.combined?.[x.process]} currency={currency} empty="—" />
+                  </td>
+                  <td className="py-1 text-xs text-slate-500">{x.note ?? 'Chart amounts of its parts added up'}</td>
+                </tr>
+              ))}
+              {comparison.modelMaking?.map((m) => (
+                <tr key={m.process}>
+                  <td className="pr-4 py-1">{m.process}</td>
+                  <td className="pr-4 py-1 text-right tabular-nums">{fmtNum(m.invoiced)}</td>
+                  <td className={`pr-4 py-1 text-right whitespace-nowrap ${m.status === 'ABOVE' ? 'text-red-700 font-medium' : ''}`}>
+                    {m.status === 'WITHIN' ? 'within' : m.status === 'ABOVE' ? 'above' : 'below'} {m.min}–{m.max}
+                  </td>
+                  <td className="py-1 text-xs text-slate-500">Model-making range — {m.basis}. Not in the totals.</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {comparison.notInChart.length > 0 && (
         <section>
           <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1">Other labour — no chart rate, not compared</h4>

@@ -115,6 +115,16 @@ describe('buildLabourBreakup', () => {
     expect(none.find((r) => r.process === 'Stone setting')).toMatchObject({ invoiceAmount: null });
     expect(none.find((r) => r.process === 'Stone setting')!.chartAmount).toBeCloseTo(chartOf(1)! + chartOf(2)!, 4);
   });
+
+  it('puts basic, rhodium and setting chart on a combined row only — nothing counted twice', () => {
+    const line = { ...aaaLine, labour: [{ process: 'CPF+ Setting + Rhodium ', amount: 90 }, { process: 'cad', amount: 33 }] };
+    const cc = compareLine(line, chart, { defaultSettingType: 'PRONG_PAVE', tolerancePct: 5 });
+    const rows = buildLabourBreakup(line, cc, chart);
+    expect(rows.map((r) => r.process)).toEqual(['CPF+ Setting + Rhodium', 'cad']);
+    expect(rows[0].chartAmount).toBe(cc.combined[0].chartAmount);
+    expect(rows[0].chartAmount).toBeGreaterThan(0);
+    expect(rows[1]).toMatchObject({ chartAmount: null, chartRange: { status: cc.modelMaking[0].status } });
+  });
 });
 
 const group = (labour: LotGroup['labour'], rows: LotRow[], stoneSettingInvoiced = 0): LotGroup => ({

@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 import Link from 'next/link';
 import type { LotReport } from '@/lib/labourReport';
 import type { LotRow } from '@/lib/labourLotReport';
-import { jobWorkBlock, jobWorkTotals, missingSide, stoneSetting } from '@/lib/jobWorkBlocks';
+import { jobWorkBlock, jobWorkTotals, missingSide, rangeText, stoneSetting } from '@/lib/jobWorkBlocks';
 import { fmtDate, fmtNum } from '@/lib/format';
 import ChartAmount from '@/components/labour/ChartAmount';
 
@@ -129,7 +129,13 @@ export default function JobWorkTable({
                     <StoneCells s={b.diamonds[k]} />
                     <td className={`${text} whitespace-nowrap`}>{x?.process ?? ''}</td>
                     <td className={`${num} ${shade(xMissing === 'invoice')}`}>{fmt(x?.invoiceAmount, 2)}</td>
-                    <td className={`${num} ${shade(xMissing === 'chart')}`}><ChartAmount value={x?.chartAmount} calc={x?.chartCalc} /></td>
+                    <td className={`${num} ${shade(xMissing === 'chart' && !x?.chartRange)}`} title={x?.chartRange ? `Model-making range — ${x.chartRange.basis}` : undefined}>
+                      {x?.chartRange && x.chartAmount == null ? (
+                        <span className={`whitespace-nowrap ${x.chartRange.status === 'ABOVE' ? 'text-red-700 font-medium' : 'text-slate-500'}`}>{rangeText(x.chartRange)}</span>
+                      ) : (
+                        <ChartAmount value={x?.chartAmount} calc={x?.chartCalc} />
+                      )}
+                    </td>
                     {k === 0 && (
                       <>
                         <td rowSpan={b.height} className={num}>{fmt(b.invoiceTotal, 2)}</td>

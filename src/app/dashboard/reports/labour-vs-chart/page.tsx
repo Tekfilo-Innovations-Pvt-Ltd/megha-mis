@@ -352,7 +352,11 @@ export default function LabourVsChartPage() {
                       <tr><th className="px-4 py-1.5 text-left font-medium" /><th className="px-3 py-1.5 text-right font-medium">Invoiced</th><th className="px-3 py-1.5 text-right font-medium">Chart</th><th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Diff Amount</th><th className="px-4 py-1.5 text-right font-medium whitespace-nowrap">Diff %</th></tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {[{ k: 'Metal labour', v: s.metal }, { k: 'Setting labour', v: s.setting }].map(({ k, v }) => (
+                      {[
+                        { k: 'Metal labour', v: s.metal },
+                        { k: 'Setting labour', v: s.setting },
+                        ...(s.combined.invoiced > 0 ? [{ k: 'Combined rows (e.g. CPF + Setting + Rhodium)', v: s.combined }] : []),
+                      ].map(({ k, v }) => (
                         <tr key={k}>
                           <td className="px-4 py-1.5">{k}</td>
                           <td className="px-3 py-1.5 text-right tabular-nums">{fmtNum(v.invoiced)}</td>
@@ -363,6 +367,15 @@ export default function LabourVsChartPage() {
                       ))}
                     </tbody>
                   </table>
+                  {s.cad.rows > 0 && (
+                    <div className="px-4 py-2.5 border-t border-slate-100 text-xs text-slate-600">
+                      <div className="font-medium text-slate-700 mb-0.5">
+                        CAD / model making: {s.cad.rows.toLocaleString()} rows, {fmtNum(s.cad.invoiced)} {currency}
+                      </div>
+                      Against the chart&apos;s model-making range (not in the totals): {s.cad.within.toLocaleString()} within,{' '}
+                      <span className={s.cad.above ? 'text-red-700 font-medium' : ''}>{s.cad.above.toLocaleString()} above</span>, {s.cad.below.toLocaleString()} below
+                    </div>
+                  )}
                   {s.notComparableReasons.length > 0 && (
                     <div className="px-4 py-2.5 border-t border-slate-100 text-xs text-slate-600">
                       <div className="font-medium text-slate-700 mb-0.5">{s.notComparable.toLocaleString()} lines not comparable</div>

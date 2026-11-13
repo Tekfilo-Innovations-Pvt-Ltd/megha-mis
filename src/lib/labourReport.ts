@@ -25,6 +25,9 @@ export interface ReportRow extends LineInfo {
   metalChart: number;
   settingInvoiced: number;
   settingChart: number;
+  combinedInvoiced: number; // combined rows ("CPF+ Setting + Rhodium") the chart could price
+  combinedChart: number;
+  cad: { rows: number; invoiced: number; below: number; within: number; above: number }; // CAD vs the model-making range
   invoicedLabour: number; // all labour on the line (labour rows + setting on stones), compared or not
   invoicedCompared: number;
   chartTotal: number;
@@ -59,6 +62,15 @@ function toRow(info: LineInfo, c: LineComparison, l: LineInput): ReportRow {
     metalChart: r2(priced.reduce((s, x) => s + x.chartAmount!, 0)),
     settingInvoiced: settingPriced ? c.setting.invoiced : 0,
     settingChart: settingPriced ? c.setting.chartAmount : 0,
+    combinedInvoiced: r2(c.combined.reduce((s, x) => s + (x.chartAmount ? x.invoiced : 0), 0)),
+    combinedChart: r2(c.combined.reduce((s, x) => s + (x.chartAmount ?? 0), 0)),
+    cad: {
+      rows: c.modelMaking.length,
+      invoiced: r2(c.modelMaking.reduce((s, x) => s + x.invoiced, 0)),
+      below: c.modelMaking.filter((x) => x.status === 'BELOW').length,
+      within: c.modelMaking.filter((x) => x.status === 'WITHIN').length,
+      above: c.modelMaking.filter((x) => x.status === 'ABOVE').length,
+    },
     // Labour rows plus setting billed on the stones themselves — the invoice line's whole labour.
     invoicedLabour: r2(l.labour.reduce((s, x) => s + x.amount, 0) + l.stones.reduce((s, x) => s + x.settingAmount, 0)),
     invoicedCompared: c.invoicedCompared,
@@ -246,6 +258,12 @@ export async function buildLabourReport(
     possibleDoubleSetting: rows.filter((r) => r.possibleDoubleSetting).length,
     metal: { invoiced: total((r) => r.metalInvoiced), chart: total((r) => r.metalChart) },
     setting: { invoiced: total((r) => r.settingInvoiced), chart: total((r) => r.settingChart) },
+    combined: { invoiced: total((r) => r.combinedInvoiced), chart: total((r) => r.combinedChart) },
+    // CAD on every line (a range check, so not in the totals above)
+    cad: (['rows', 'invoiced', 'below', 'within', 'above'] as const).reduce(
+      (acc, k) => ({ ...acc, [k]: r2(rows.reduce((s, r) => s + r.cad[k], 0)) }),
+      { rows: 0, invoiced: 0, below: 0, within: 0, above: 0 },
+    ),
     invoicedLabour: r2(rows.reduce((s, r) => s + r.invoicedLabour, 0)), // all lines, all labour
     invoiced,
     chart: chartTotal,

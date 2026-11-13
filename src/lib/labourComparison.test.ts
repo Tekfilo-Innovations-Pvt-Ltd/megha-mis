@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import seed from '../../data/price-charts/w8-gold-2018-12-01.json';
 import type { PriceChart } from './priceChart';
-import { classifyProcess, compareLine, settingTypesIn, type LineInput, type StoneInput } from './labourComparison';
+import { classifyProcess, combinedClasses, compareLine, modelMakingRange, settingTypesIn, type LineInput, type StoneInput } from './labourComparison';
 
 const chart = seed as PriceChart;
 const options = { defaultSettingType: 'PRONG_PAVE', tolerancePct: 5 };
@@ -140,6 +140,30 @@ describe('compareLine', () => {
 
   it('still refuses silver lines', () => {
     expect(compareLine({ ...ringLine, metal: [{ commodity: 'GOLD', grams: 5 }, { commodity: 'SILVER', grams: 5 }] }, chart, options).metal.issue).toBe('OTHER_METAL');
+  });
+
+  it('compares a combined "CPF+ Setting + Rhodium" row with its parts added up', () => {
+    const line: LineInput = { ...ringLine, qty: 1, metal: [{ commodity: 'GOLD', grams: 2.5 }], labour: [{ process: 'CPF+ Setting + Rhodium ', amount: 20 }], stones: [stone({ componentId: 11, carats: 0.2, pieces: 20 })] };
+    const r = compareLine(line, chart, options);
+    expect(combinedClasses('CPF+ Setting + Rhodium ')).toEqual(['BASIC', 'SETTING', 'RHODIUM']);
+    expect(combinedClasses('Basic +CAD new pic')).toBeNull();
+    const x = r.combined[0];
+    // ring 0–3 g, qty 1: basic under-5 3.8955 + rhodium 1.14 + 20 diamonds × 0.21
+    expect(x).toMatchObject({ process: 'CPF+ Setting + Rhodium', invoiced: 20, settingChart: 4.2, chartAmount: 9.2355, note: null });
+    expect(x.charges.map((c) => c.code)).toEqual(['BASIC_UNDER_5', 'RHODIUM']);
+    expect(r.notInChart).toEqual([]);
+    expect(r).toMatchObject({ invoicedCompared: 20, chartTotal: 9.2355, partial: false });
+  });
+
+  it('checks CAD against the model-making range and leaves it out of the totals', () => {
+    const line: LineInput = { ...ringLine, qty: 1, metal: [{ commodity: 'GOLD', grams: 4 }], labour: [{ process: 'Basic 胚底', amount: 6 }, { process: 'cad', amount: 33 }], stones: [] };
+    const r = compareLine(line, chart, options);
+    // rings 3-5g: simple 40 – difficult 50
+    expect(r.modelMaking).toEqual([{ process: 'cad', invoiced: 33, basis: 'Rings, 3-5g: simple 40 – difficult 50', min: 40, max: 50, status: 'BELOW' }]);
+    expect(r.notInChart).toEqual([]);
+    expect(r.invoicedCompared).toBe(6);
+    expect(modelMakingRange(chart, 'BRACELET', 20)).toEqual({ basis: 'Bracelet: 100 – 200 per style', min: 100, max: 200 });
+    expect(modelMakingRange(chart, 'RING', 30)?.basis).toBe('Rings: 60 – 120 per style'); // above the weight bands
   });
 
   it('uses the under-5 price below 5 pieces', () => {

@@ -1,4 +1,5 @@
 import {
+  type CombinedComparison,
   isComparedCharge,
   isComparedSetting,
   type ChargeComparison,
@@ -105,6 +106,14 @@ export function stonePart(st: StoneComparison, chart: PriceChart): ChartCalcPart
   };
 }
 
+// A combined labour row ("CPF+ Setting + Rhodium"): the chart amounts of its
+// parts on the line — each metal charge, and every stone's setting.
+export function combinedCalc(x: CombinedComparison, c: LineComparison, line: Pick<LineInput, 'qty' | 'productType'>, chart: PriceChart): ChartCalc | null {
+  if (x.chartAmount == null) return null;
+  const stones = x.settingChart != null ? c.setting.stones.map((st) => stonePart(st, chart)) : [];
+  return chartCalc(`Chart amount — ${x.process}`, [...x.charges.map((ch) => chargePart(ch, c, line)), ...stones], x.chartAmount, x.note ?? undefined);
+}
+
 // A calc from its parts; null when there is nothing to explain.
 export function chartCalc(title: string, parts: (ChartCalcPart | null | undefined)[], total?: number | null, note?: string): ChartCalc | null {
   const kept = parts.filter((p): p is ChartCalcPart => p != null);
@@ -127,6 +136,7 @@ export interface LineCalcs {
   setting: ChartCalc | null;
   charges: Record<string, ChartCalc>; // by charge code
   stones: Record<number, ChartCalc>; // by component id
+  combined: Record<string, ChartCalc>; // by process name
 }
 
 // Every chart amount of one invoice line (the Lines tab and its drill-down).
@@ -152,7 +162,16 @@ export function lineCalcs(c: LineComparison, line: Pick<LineInput, 'qty' | 'prod
     c.metal.charges.some((ch) => ch.chartAmount != null && !isComparedCharge(ch)) ? 'metal charges with nothing invoiced' : null,
     !settingCompared && c.setting.chartAmount > 0 ? `setting ${n(c.setting.chartAmount)} (no setting invoiced, or the chart could not price it)` : null,
   ].filter(Boolean);
-  const total = sumCalcs('Chart labour of the line', [metal, setting], c.chartTotal);
+  const combined: Record<string, ChartCalc> = {};
+  for (const x of c.combined) {
+    const calc = combinedCalc(x, c, line, chart);
+    if (calc) combined[x.process] = calc;
+  }
+  const total = sumCalcs(
+    'Chart labour of the line',
+    [metal, setting, ...c.combined.filter((x) => x.chartAmount != null && x.chartAmount > 0).map((x) => combined[x.process])],
+    c.chartTotal,
+  );
   if (total && notCounted.length) total.note = `Not counted: ${notCounted.join('; ')} — only labour the factory invoiced is compared.`;
-  return { total, metal, setting, charges, stones };
+  return { total, metal, setting, charges, stones, combined };
 }

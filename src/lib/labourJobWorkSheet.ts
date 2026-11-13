@@ -1,5 +1,5 @@
 import type ExcelJS from 'exceljs';
-import { jobWorkBlock, jobWorkTotals, missingSide, stoneSetting } from '@/lib/jobWorkBlocks';
+import { jobWorkBlock, jobWorkTotals, missingSide, rangeText, stoneSetting } from '@/lib/jobWorkBlocks';
 import type { LotGroup, LotRow } from '@/lib/labourLotReport';
 
 // "Job Work Details" sheet of the lot-detail Excel, in the layout of the ERP's
@@ -156,8 +156,8 @@ export function addJobWorkSheet(wb: ExcelJS.Workbook, groups: LotGroup[]) {
     labour.forEach((x, k) => {
       ws.getCell(`${C.labour}${row + k}`).value = x.process;
       ws.getCell(`${C.labourInv}${row + k}`).value = x.invoiceAmount;
-      ws.getCell(`${C.labourChart}${row + k}`).value = x.chartAmount;
-      const missing = missingSide(x);
+      ws.getCell(`${C.labourChart}${row + k}`).value = x.chartAmount ?? (x.chartRange ? rangeText(x.chartRange) : null);
+      const missing = x.chartRange ? null : missingSide(x);
       if (missing) shaded.push(`${missing === 'invoice' ? C.labourInv : C.labourChart}${row + k}`);
     });
     for (let k = 0; k < height; k++) merge(ws, `${C.csMaster}${row + k}`, `${PAIRS[C.csMaster]}${row + k}`);

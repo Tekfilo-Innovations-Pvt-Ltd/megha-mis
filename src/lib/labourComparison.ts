@@ -109,6 +109,22 @@ const chartChargesOf = (cls: LabourClass) => CHART_CHARGES[cls] ?? [cls];
 // (as before they were charted) rather than making the line partial.
 const ONLY_WHEN_CHARTED = new Set<LabourClass>(['PLATING', 'LASER_STAMPING']);
 
+// A combined labour row ("CPF+ Setting + Rhodium") whose every part is a
+// charge the chart prices: its classes, compared with the chart amounts of
+// those charges added up for the line. Null when it isn't combined or a part
+// has no chart counterpart ("Basic +CAD new pic", "Cad+Wax").
+export function combinedClasses(name: string): LabourClass[] | null {
+  if (!name.includes('+')) return null;
+  const parts = name.split('+').map((p) => p.trim()).filter(Boolean);
+  const classes = parts.map(classifyProcess);
+  if (parts.length < 2 || classes.some((c) => c == null)) return null;
+  return Array.from(new Set(classes as LabourClass[]));
+}
+
+// CAD / model-making labour ("cad", "CAD CHARGES", "Cad+Wax", "CAD new pic 畫圖"):
+// checked against the chart's model-making table, a min–max range per style.
+export const isModelMakingProcess = (name: string) => /cad/i.test(name) && !/basic|setting|cpf|胚底/i.test(name);
+
 // ERP process names vary ("Basic 胚底", "Basic胚底", "Cover Back 网底", "solder 嵌件"…).
 export function classifyProcess(name: string): LabourClass | null {
   const n = name.toLowerCase();
@@ -142,6 +158,32 @@ export interface ChargeComparison {
   chartRate: number | null; // per piece, margin applied
   chartAmount: number | null; // rate × qty; null when the chart has no comparable rate
   note: string | null;
+}
+
+// A combined labour row (see combinedClasses) against the chart amounts of
+// its parts on this line: the metal charges (rate × qty) and, for SETTING, the
+// setting chart amount of the line's stones.
+export interface CombinedComparison {
+  process: string;
+  classes: LabourClass[];
+  invoiced: number;
+  charges: ChargeComparison[]; // the metal parts, each with its chart amount
+  settingChart: number | null; // the setting part; null when the row has none
+  chartAmount: number | null; // all parts; null when one can't be priced
+  note: string | null;
+}
+
+// CAD / model-making labour against the chart's model-making range for the
+// style (min = simple design, max = difficult design at that weight; or the
+// per-style min–max). A range, so it is checked, not added to the line totals.
+export type RangeStatus = 'BELOW' | 'WITHIN' | 'ABOVE';
+export interface ModelMakingCheck {
+  process: string;
+  invoiced: number;
+  basis: string; // which chart row, e.g. "Rings, 3-5g: simple 40 – difficult 50"
+  min: number;
+  max: number;
+  status: RangeStatus;
 }
 
 // A charge / the setting counts in the line totals only when it was invoiced.
@@ -209,6 +251,8 @@ export interface LineComparison {
   invDetId: number;
   metal: MetalComparison;
   setting: SettingComparison;
+  combined: CombinedComparison[];
+  modelMaking: ModelMakingCheck[];
   notInChart: { process: string; amount: number }[];
   invoicedCompared: number; // labour that has a chart counterpart
   chartTotal: number;
@@ -333,6 +377,56 @@ export function allocateSettingLabour(rows: LabourInput[], stones: StoneInput[])
   return { byStone, unallocated: rest };
 }
 
+// ---------- model making (CAD) ----------
+
+// ERP product type → the chart's model-making style: its "by style" row and
+// (rings, pendants, earrings) the Chinese word of its "by weight" rows, which
+// come in a simple (简单) and a difficult (复杂) version.
+const MODEL_STYLES: Record<string, { style: string; zh?: string }> = {
+  RING: { style: 'Rings', zh: '戒指' },
+  PENDANT: { style: 'Pendant', zh: '吊咀' },
+  'PENDANT WITH CHAIN': { style: 'Pendant', zh: '吊咀' },
+  EARRINGS: { style: 'Earring', zh: '耳环' },
+  STUD: { style: 'Earring', zh: '耳环' },
+  BRACELET: { style: 'Bracelet' },
+  BANGLE: { style: 'Bangle' },
+  NECKLACE: { style: 'Necklace' },
+};
+
+// Upper weight of a band as written: "Below 3g" → 3, "3-5g" → 5.
+const bandMax = (band: string) => {
+  const nums = band.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  return nums.length ? nums[nums.length - 1] : null;
+};
+
+// The model-making range for a product type and weight per piece: simple –
+// difficult design rate of the weight band when the chart has one, else the
+// style's min – max. Null when the chart has neither.
+export function modelMakingRange(
+  chart: PriceChart,
+  productType: string | null,
+  gramsPerPiece: number | null,
+): { basis: string; min: number; max: number } | null {
+  const m = productType ? MODEL_STYLES[productType] : undefined;
+  if (!m) return null;
+  const { byStyle, byWeight } = chart.metalChart.modelMaking;
+  if (m.zh && gramsPerPiece != null && gramsPerPiece > 0) {
+    const band = byWeight.weightBands.findIndex((b) => {
+      const max = bandMax(b);
+      return max != null && gramsPerPiece <= max;
+    });
+    const simple = byWeight.rows.find((r) => r.styleZh?.includes(m.zh!) && r.styleZh.includes('简单'));
+    const difficult = byWeight.rows.find((r) => r.styleZh?.includes(m.zh!) && r.styleZh.includes('复杂'));
+    const lo = band >= 0 ? simple?.rates[band] : null;
+    const hi = band >= 0 ? difficult?.rates[band] : null;
+    if (lo != null && hi != null) {
+      return { basis: `${m.style}, ${byWeight.weightBands[band]}: simple ${lo} – difficult ${hi}`, min: Math.min(lo, hi), max: Math.max(lo, hi) };
+    }
+  }
+  const row = byStyle.find((r) => r.style === m.style);
+  return row ? { basis: `${m.style}: ${row.min} – ${row.max} per style`, min: row.min, max: row.max } : null;
+}
+
 // ---------- comparison ----------
 
 export function compareLine(line: LineInput, chart: PriceChart, options: ComparisonOptions): LineComparison {
@@ -346,12 +440,18 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
   const rowsOf = new Map<LabourClass, LabourInput[]>();
   const notInChart: { process: string; amount: number }[] = [];
   const settingRows: LabourInput[] = [];
+  const combinedRows: { row: LabourInput; classes: LabourClass[] }[] = [];
+  const modelMakingRows: LabourInput[] = [];
   for (const l of line.labour) {
     const c = classifyProcess(l.process);
+    const parts = c ? null : combinedClasses(l.process);
     if (c) {
       byClass.set(c, (byClass.get(c) ?? 0) + l.amount);
       rowsOf.set(c, [...(rowsOf.get(c) ?? []), l]);
-    } else if (l.amount !== 0) notInChart.push({ process: l.process, amount: l.amount });
+    } else if (l.amount === 0) continue;
+    else if (parts) combinedRows.push({ row: l, classes: parts });
+    else if (isModelMakingProcess(l.process)) modelMakingRows.push(l);
+    else notInChart.push({ process: l.process, amount: l.amount });
     if (c === 'SETTING') settingRows.push(l);
   }
   // A class priced only where charted, with no chart rate: back to "not in chart".
@@ -378,6 +478,8 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
     variant: null,
     charges: [],
   };
+  // Prices one labour class on the line's weight range (set once the range is found).
+  let priceClass: ((cls: LabourClass, invoiced: number) => ChargeComparison) | null = null;
   const chartMetal = chart.metal.toUpperCase();
   if (!currencyOk) metal.issue = 'CURRENCY';
   else if (line.qty <= 0) metal.issue = 'NO_QTY';
@@ -411,6 +513,11 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
         };
       };
       metal.charges.push(charge('BASIC', basicCode, byClass.get('BASIC') ?? 0));
+      priceClass = (cls, invoiced) => {
+        if (cls === 'BASIC') return charge(cls, basicCode, invoiced);
+        const codes = chartChargesOf(cls);
+        return charge(cls, codes.find((x) => metalRate(range.id, x)) ?? codes[0], invoiced);
+      };
       for (const c of ADD_ONS) {
         const invoiced = byClass.get(c) ?? 0;
         if (invoiced === 0) continue;
@@ -515,18 +622,57 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
     possibleDoubleCharge: invoicedLabour > 0 && invoicedOnStones > 0 && Math.abs(invoicedLabour - invoicedOnStones) < 0.01,
   };
 
+  // ---- combined rows ("CPF+ Setting + Rhodium") ----
+  // Their setting part takes the setting chart of every stone on the line, so
+  // a line that also has its own setting rows can't be split fairly.
+  const combined: CombinedComparison[] = combinedRows.map(({ row, classes }) => {
+    const out: CombinedComparison = { process: row.process.trim(), classes, invoiced: round(row.amount), charges: [], settingChart: null, chartAmount: null, note: null };
+    const metalParts = classes.filter((c) => c !== 'SETTING');
+    if (metalParts.length && !priceClass) return { ...out, note: metal.issue ? METAL_ISSUE_TEXT[metal.issue] : 'No metal weight range' };
+    out.charges = metalParts.map((c) => priceClass!(c, 0));
+    if (classes.includes('SETTING')) {
+      if (setting.invoiced > 0) return { ...out, note: 'The line also has setting invoiced on its own — setting part not separable' };
+      out.settingChart = setting.chartAmount;
+    }
+    const missing = out.charges.find((c) => c.chartAmount == null);
+    if (missing) return { ...out, note: missing.note ?? `No chart rate for ${missing.name}` };
+    if (out.settingChart != null && setting.unpricedStones > 0) out.note = 'Some stones could not be priced — setting part is partial';
+    out.chartAmount = round(sum(out.charges.map((c) => c.chartAmount!)) + (out.settingChart ?? 0));
+    return out;
+  });
+
+  // ---- CAD / model making ----
+  const modelMaking: ModelMakingCheck[] = [];
+  for (const row of modelMakingRows) {
+    const range = modelMakingRange(chart, line.productType, metal.gramsPerPiece ?? (line.qty > 0 && grams > 0 ? grams / line.qty : null));
+    if (!range) {
+      notInChart.push({ process: row.process, amount: row.amount });
+      continue;
+    }
+    const invoiced = round(row.amount);
+    modelMaking.push({ process: row.process.trim(), invoiced, ...range, status: invoiced < range.min ? 'BELOW' : invoiced > range.max ? 'ABOVE' : 'WITHIN' });
+  }
+
   // ---- line totals ----
   // Only labour the factory actually charged is compared: a chart amount with
   // nothing invoiced (e.g. setting billed on another line) is shown, not counted.
+  // CAD is checked against a range, so it isn't in the totals.
   const comparableCharges = metal.charges.filter(isComparedCharge);
   const settingComparable = isComparedSetting(setting);
-  const invoicedCompared = round(sum(comparableCharges.map((c) => c.invoiced)) + (settingComparable ? setting.invoiced : 0));
-  const chartTotal = round(sum(comparableCharges.map((c) => c.chartAmount!)) + (settingComparable ? setting.chartAmount : 0));
+  const comparedCombined = combined.filter((x) => x.chartAmount != null && x.chartAmount > 0);
+  const invoicedCompared = round(
+    sum(comparableCharges.map((c) => c.invoiced)) + (settingComparable ? setting.invoiced : 0) + sum(comparedCombined.map((x) => x.invoiced)),
+  );
+  const chartTotal = round(
+    sum(comparableCharges.map((c) => c.chartAmount!)) + (settingComparable ? setting.chartAmount : 0) + sum(comparedCombined.map((x) => x.chartAmount!)),
+  );
   const variance = round(invoicedCompared - chartTotal, 2);
   const variancePct = chartTotal > 0 ? round((variance / chartTotal) * 100, 1) : null;
 
   const uncomparedInvoiced =
-    metal.charges.some((c) => c.chartAmount == null && c.invoiced !== 0) || (setting.invoiced > 0 && !settingComparable);
+    metal.charges.some((c) => c.chartAmount == null && c.invoiced !== 0) ||
+    (setting.invoiced > 0 && !settingComparable) ||
+    combined.some((x) => x.chartAmount == null);
   const partial = uncomparedInvoiced || setting.unpricedStones > 0;
   const status: LineStatus =
     chartTotal <= 0
@@ -537,7 +683,7 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
           ? 'OVER'
           : 'UNDER';
 
-  return { invDetId: line.invDetId, metal, setting, notInChart, invoicedCompared, chartTotal, variance, variancePct, status, partial };
+  return { invDetId: line.invDetId, metal, setting, combined, modelMaking, notInChart, invoicedCompared, chartTotal, variance, variancePct, status, partial };
 }
 
 export const METAL_ISSUE_TEXT: Record<MetalIssue, string> = {

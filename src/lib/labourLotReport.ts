@@ -6,12 +6,13 @@ import {
   type LineComparison,
   type LineInput,
   type MetalIssue,
+  type RangeStatus,
   type StoneIssue,
 } from '@/lib/labourComparison';
 import type { LineInfo } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
 import { correctionText } from '@/lib/stoneCorrections';
-import { chargePart, chartCalc, stonePart, sumCalcs, type ChartCalc, type ChartCalcPart } from '@/lib/chartCalc';
+import { chargePart, chartCalc, combinedCalc, stonePart, sumCalcs, type ChartCalc, type ChartCalcPart } from '@/lib/chartCalc';
 
 // "Labour vs Chart — lot detail": one row per lot (metal charge, stone lot)
 // of each invoice line, with the line's weights repeated on every row so the
@@ -65,6 +66,9 @@ export type LotNoteCode =
   | 'LINE_AVERAGE'
   | 'LINE_EXTRA'
   | 'NOT_IN_CHART'
+  | 'COMBINED'
+  | 'MODEL_MAKING'
+  | 'IN_COMBINED'
   | 'EMPTY_LINE'
   | 'CUSTOMER_CORRECTED';
 
@@ -115,6 +119,9 @@ export interface LabourBreakupRow {
   invoiceAmount: number | null; // null on a chart-only row
   chartAmount: number | null; // null when the chart has no rate for this process
   chartCalc?: ChartCalc | null; // the metal charges / stones that make up the chart amount
+  // CAD / model making: the chart's range for the style instead of an amount
+  // (not in the chart total)
+  chartRange?: { min: number; max: number; status: RangeStatus; basis: string } | null;
 }
 
 export interface LotGroup {
@@ -143,9 +150,20 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
   const extra: LabourBreakupRow[] = [];
   const calcTitle = (process: string) => `Chart amount — ${process}`;
 
+  // Combined rows ("CPF+ Setting + Rhodium") carry the chart amounts of their
+  // parts, so those parts don't get rows of their own.
+  const inCombined = new Set(c.combined.flatMap((x) => x.classes));
+  for (const x of c.combined) {
+    const target = rows.find((r) => r.process === x.process);
+    if (!target || x.chartAmount == null) continue;
+    target.chart = x.chartAmount;
+    target.parts.push(...(combinedCalc(x, c, input, chart)?.parts ?? []));
+  }
+
   // Metal charges → the first process of their class.
   for (const ch of c.metal.charges) {
     if (ch.chartAmount == null) continue;
+    if (inCombined.has(ch.labourClass) && ch.invoiced === 0) continue;
     const cls = ch.labourClass;
     const target = rows.find((r) => r.cls === cls && cls != null);
     const part = chargePart(ch, c, input);
@@ -163,6 +181,7 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
   for (const st of c.setting.stones) {
     // Setting recorded on the stone itself stays with the stone in the stone section.
     if (st.chartAmount == null || st.invoicedOnStone !== 0) continue;
+    if (inCombined.has('SETTING')) continue; // in the combined row's chart amount
     const section = sectionOf(st.rateGroup);
     const target =
       settingRows.find((r) => settingKind(r.process) === section) ??
@@ -181,13 +200,18 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
     extra.push({ process: 'Stone setting', invoiceAmount: null, chartAmount: total, chartCalc: chartCalc(calcTitle('Stone setting'), unbilledParts, total) });
   }
 
+  const ranges = new Map(c.modelMaking.map((m) => [m.process, m]));
   return [
-    ...rows.map((r) => ({
-      process: r.process,
-      invoiceAmount: r4(r.invoice),
-      chartAmount: r.chart,
-      chartCalc: r.chart != null ? chartCalc(calcTitle(r.process), r.parts, r.chart) : null,
-    })),
+    ...rows.map((r) => {
+      const m = ranges.get(r.process);
+      return {
+        process: r.process,
+        invoiceAmount: r4(r.invoice),
+        chartAmount: r.chart,
+        chartCalc: r.chart != null ? chartCalc(calcTitle(r.process), r.parts, r.chart) : null,
+        ...(m ? { chartRange: { min: m.min, max: m.max, status: m.status, basis: m.basis } } : {}),
+      };
+    }),
     ...extra,
   ];
 }
@@ -224,6 +248,9 @@ const NOTES: Record<Exclude<LotNoteCode, `METAL_${string}` | `STONE_${string}`>,
     text: 'Line-level setting labour on top of the setting already invoiced on every stone — check for double charging',
   },
   NOT_IN_CHART: { short: 'Not in chart', text: 'The chart has no rate for this labour' },
+  COMBINED: { short: 'Combined row', text: 'One invoice row for several charges — compared with their chart amounts added up' },
+  MODEL_MAKING: { short: 'Model making range', text: "CAD checked against the chart's model-making range (not in the totals)" },
+  IN_COMBINED: { short: 'In combined row', text: 'Invoiced inside a combined labour row on this line' },
   EMPTY_LINE: { short: 'Nothing to compare', text: 'No metal weight, stones or labour on this line' },
   CUSTOMER_CORRECTED: { short: 'Customer correction', text: 'Shape / MM size from the customer stone sheet' },
 };
@@ -430,6 +457,48 @@ export function buildLotGroup(info: LineInfo, input: LineInput, c: LineCompariso
       variance: chartAmount > 0 ? r4(c.setting.unallocatedLabour - chartAmount) : null,
       variancePct: null,
       notes: [note(open.length === 0 && c.setting.stones.length > 0 ? 'LINE_EXTRA' : 'LINE_AVERAGE')],
+    });
+  }
+
+  // ---- combined rows and CAD ----
+  for (const x of c.combined) {
+    rows.push({
+      ...blank,
+      kind: 'OTHER',
+      lotCode: null,
+      commodity: null,
+      item: x.process,
+      wt: null,
+      wtUom: null,
+      pcs: input.qty,
+      invoiceRate: per(x.invoiced, input.qty),
+      invoiceAmount: x.invoiced,
+      chartRate: x.chartAmount != null ? per(x.chartAmount, input.qty) : null,
+      chartAmount: x.chartAmount,
+      chartCalc: combinedCalc(x, c, input, chart),
+      variance: x.chartAmount != null ? r4(x.invoiced - x.chartAmount) : null,
+      variancePct: null,
+      notes: [x.note ? { ...note('COMBINED'), text: `${NOTES.COMBINED.text}. ${x.note}` } : note('COMBINED')],
+    });
+  }
+  for (const m of c.modelMaking) {
+    rows.push({
+      ...blank,
+      kind: 'OTHER',
+      lotCode: null,
+      commodity: null,
+      item: m.process,
+      size: `${m.min}–${m.max}`,
+      wt: null,
+      wtUom: null,
+      pcs: input.qty,
+      invoiceRate: null,
+      invoiceAmount: m.invoiced,
+      chartRate: null,
+      chartAmount: null,
+      variance: null,
+      variancePct: null,
+      notes: [{ ...note('MODEL_MAKING'), short: `Model making ${m.status.toLowerCase()} range`, text: `${m.basis} — invoiced ${m.invoiced} is ${m.status === 'WITHIN' ? 'within the range' : m.status === 'ABOVE' ? 'above the range' : 'below the range'} (not in the totals)` }],
     });
   }
 

@@ -59,11 +59,20 @@ export const settingNotCountedRemark = (amount: number) =>
   amount ? `Component setting ${amount.toFixed(2)} not counted — setting taken from the labour rows` : '';
 
 // "No chart amount: Findings, TANZANITE TRILLION; No invoice amount: Basic — under 5 pcs per style"
+// "35–65 within" — a CAD row's model-making range and where the invoice falls.
+export const rangeText = (r: NonNullable<LabourBreakupRow['chartRange']>) =>
+  `${r.min}–${r.max} ${r.status === 'WITHIN' ? 'within' : r.status === 'ABOVE' ? 'above' : 'below'}`;
+
 function remarksFor(stones: LotRow[], labour: LabourBreakupRow[], componentSettingNotCounted: number): string {
   const noChart = new Set<string>();
   const noInvoice = new Set<string>();
+  const ranges: string[] = [];
   for (const s of stones) if (missingSide(s) === 'chart') noChart.add(stoneName(s));
   for (const x of labour) {
+    if (x.chartRange) {
+      ranges.push(`${x.process} ${x.invoiceAmount} vs model-making range ${rangeText(x.chartRange)} (not in the totals)`);
+      continue;
+    }
     const side = missingSide(x);
     if (side === 'chart') noChart.add(x.process);
     else if (side === 'invoice') noInvoice.add(x.process);
@@ -71,6 +80,7 @@ function remarksFor(stones: LotRow[], labour: LabourBreakupRow[], componentSetti
   return [
     noChart.size ? `No chart amount: ${Array.from(noChart).join(', ')}` : null,
     noInvoice.size ? `No invoice amount: ${Array.from(noInvoice).join(', ')}` : null,
+    ...ranges,
     settingNotCountedRemark(componentSettingNotCounted) || null,
   ]
     .filter(Boolean)
