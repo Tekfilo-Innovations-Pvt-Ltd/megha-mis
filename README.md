@@ -23,6 +23,17 @@ After ERP schema changes: `npm run erp:pull` (introspect + fix-up + generate). I
 
 Check the connection and the read-only guard: `npx tsx scripts/check-erp.ts`.
 
+### Running locally on a low-memory PC
+
+`npm run dev` keeps the compiler in memory (~1.4 GB once the Labour vs Chart report is open). To just *use* the app, run the production build instead (~50 MB idle, ~380 MB after the report):
+
+```bash
+npm run build:local            # Windows-safe build; skips the slow `prisma generate` if the client exists (add -- --generate after schema changes)
+npm run start                  # http://localhost:3001
+```
+
+Re-run `npm run build:local` after pulling new code. `npm run build` (used by Docker) fails on Windows with `EPERM … scandir 'C:\Users\<you>\Application Data'` — see `scripts/build-local.mjs` for why.
+
 ## Read-only database role (recommended)
 
 Run once on the tenant database as an admin, then use `mis_readonly` in `DATABASE_URL`:
