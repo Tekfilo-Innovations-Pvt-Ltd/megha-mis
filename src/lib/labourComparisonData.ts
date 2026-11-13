@@ -45,8 +45,35 @@ export interface LineInfo {
 // Labour rows that are stone setting only (not combined rows like "CPF+ Setting + Rhodium").
 const SETTING_ROW = /^((side|center|centre) stone )?setting$/i;
 
+type LoadedLines = { info: Map<number, LineInfo>; lines: LineInput[] };
+
+// Short-lived cache of loaded lines. The Labour vs Chart page asks for the same
+// lines over and over (report + lot detail together, then every page, tab and
+// sort change), and each load reads every line of the company from the remote
+// ERP. Entries live CACHE_TTL_MS, and identical loads in flight share one query.
+// The key includes the stone-corrections upload time, so an upload takes effect
+// at once. Callers must treat the result as read-only (none modify it).
+const CACHE_TTL_MS = 2 * 60 * 1000;
+const CACHE_MAX = 6; // whole-company loads are tens of MB each
+const cache = new Map<string, { at: number; value: Promise<LoadedLines> }>();
+
 // Every filter is optional — with none, all lines of the company are loaded.
-export async function loadComparisonLines(filter: LineFilter): Promise<{ info: Map<number, LineInfo>; lines: LineInput[] }> {
+export async function loadComparisonLines(filter: LineFilter): Promise<LoadedLines> {
+  const corrections = filter.erpStoneDetails ? null : await getStoneCorrections(filter.companyId);
+  // Sorted keys, so the same filter written in another order shares an entry.
+  const key = `${JSON.stringify(filter, Object.keys(filter).sort())}|${corrections?.uploadedAt ?? ''}`;
+  const now = Date.now();
+  for (const [k, e] of Array.from(cache)) if (now - e.at > CACHE_TTL_MS) cache.delete(k);
+  const hit = cache.get(key);
+  if (hit) return hit.value;
+  const value = loadUncached(filter);
+  cache.set(key, { at: now, value });
+  value.catch(() => cache.delete(key)); // don't keep a failed load
+  while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value!);
+  return value;
+}
+
+async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
   // The optional conditions are assembled as plain SQL with numbered
   // parameters. (Composing Prisma.sql fragments looked fine under tsx, but in
   // the Next.js bundle the fragments were sent as one JSON value — "argument
