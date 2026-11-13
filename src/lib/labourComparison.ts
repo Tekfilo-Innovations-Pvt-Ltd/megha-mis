@@ -2,6 +2,7 @@ import {
   findRange,
   matchCommodity,
   metalRateIndex,
+  rangeMargin,
   settingRateIndex,
   type PriceChart,
   type SizeRange,
@@ -12,7 +13,8 @@ import {
 //
 //   Metal:   product type + net metal weight per piece → weight range →
 //            Basic (under 5 / 5 pcs up per style, by line qty) and add-ons
-//            (J-back, soldering, rhodium, two-tone) × qty.
+//            (cover back / J-back, soldering, rhodium, plating, two-tone,
+//            laser stamping) × the range's margin × qty.
 //   Setting: each stone → chart commodity → rate group (by shape) →
 //            size range (consumed carats ÷ consumed pieces, else mm size) →
 //            setting type (the stone's own, else the one named on its invoice
@@ -71,10 +73,31 @@ export interface ComparisonOptions {
 
 // ---------- labour process → chart charge ----------
 
-// Chart charge-type codes the invoice labour processes map onto. "BASIC" picks
-// BASIC_UNDER_5 / BASIC_5_UP by quantity.
-export type LabourClass = 'BASIC' | 'J_BACK' | 'SOLDERING' | 'RHODIUM' | 'TWO_TONE' | 'SETTING';
-export const ADD_ONS: LabourClass[] = ['J_BACK', 'SOLDERING', 'RHODIUM', 'TWO_TONE'];
+// Labour classes the invoice labour processes map onto. "BASIC" picks the chart's
+// BASIC_UNDER_5 / BASIC_5_UP by quantity; each add-on is priced from the first of
+// its CHART_CHARGES the weight range has a rate for.
+export type LabourClass =
+  | 'BASIC'
+  | 'COVER_BACK'
+  | 'J_BACK'
+  | 'SOLDERING'
+  | 'RHODIUM'
+  | 'PLATING'
+  | 'TWO_TONE'
+  | 'LASER_STAMPING'
+  | 'SETTING';
+export const ADD_ONS: LabourClass[] = ['COVER_BACK', 'J_BACK', 'SOLDERING', 'RHODIUM', 'PLATING', 'TWO_TONE', 'LASER_STAMPING'];
+
+// Cover back (网底) was priced on the chart's J-back column before the chart had
+// its own Cover back charge (added for BANGLE from the Labour Bangle sheet,
+// 2026-11-13); ranges without a Cover back rate still use J-back.
+const CHART_CHARGES: Partial<Record<LabourClass, string[]>> = { COVER_BACK: ['COVER_BACK', 'J_BACK'] };
+const chartChargesOf = (cls: LabourClass) => CHART_CHARGES[cls] ?? [cls];
+
+// Plating and laser stamping are on nearly every ERP line but only some
+// product types have a chart rate for them; without one they stay "not in chart"
+// (as before they were charted) rather than making the line partial.
+const ONLY_WHEN_CHARTED = new Set<LabourClass>(['PLATING', 'LASER_STAMPING']);
 
 // ERP process names vary ("Basic 胚底", "Basic胚底", "Cover Back 网底", "solder 嵌件"…).
 export function classifyProcess(name: string): LabourClass | null {
@@ -85,10 +108,12 @@ export function classifyProcess(name: string): LabourClass | null {
   if (n.includes('cad')) return null;
   // CPF (casting, polishing, finishing) is AAA jewelry's basic labour — the ERP's own price chart uses it for metal labour.
   if (n.includes('basic') || n.includes('胚底') || /\bcpf\b/.test(n)) return 'BASIC';
-  if (n.includes('cover back') || n.includes('coverback') || n.includes('网底') || n.includes('影底')) return 'J_BACK';
+  if (n.includes('cover back') || n.includes('coverback') || n.includes('网底') || n.includes('影底')) return 'COVER_BACK';
   if (n.includes('solder') || n.includes('嵌件')) return 'SOLDERING';
   if (n.includes('rhodium')) return 'RHODIUM';
+  if (n.includes('plating') || n.includes('电金')) return 'PLATING';
   if (n.includes('two-tone') || n.includes('two tone') || n.includes('分色')) return 'TWO_TONE';
+  if (n.includes('laser') || n.includes('stamping') || n.includes('镭射') || n.includes('字印')) return 'LASER_STAMPING';
   return null;
 }
 
@@ -99,9 +124,12 @@ export type StoneIssue = 'NO_COMMODITY' | 'NO_SHAPE' | 'NO_PIECES' | 'NO_SIZE' |
 
 export interface ChargeComparison {
   code: string; // chart charge type code (BASIC_5_UP, J_BACK, …)
+  labourClass: LabourClass; // the invoice labour it is compared with
   name: string;
   invoiced: number;
-  chartRate: number | null;
+  baseRate?: number | null; // the chart cell, before the range's margin
+  margin?: number | null; // the range's margin, when it isn't 1
+  chartRate: number | null; // per piece, margin applied
   chartAmount: number | null; // rate × qty; null when the chart has no comparable rate
   note: string | null;
 }
@@ -213,7 +241,14 @@ export function sizeLabel(r: SizeRange): string {
 // rule (2026-10-30): Ruby, Sapphire and Fancy Sapphire that is round (RD),
 // triangle (TRI) or cushion (CU) is priced as oval — the Oval column of the
 // Ruby / Sapphire chart.
-const AS_OVAL = { ROUND: 'OVAL', RD: 'OVAL', TRIANGLE: 'OVAL', TRILLION: 'OVAL', TRI: 'OVAL', CUSHION: 'OVAL', CU: 'OVAL' };
+// The user's rule (2026-11-13, matching AAA invoices to the Wilson chart):
+// faceted colour-stone shapes the chart has no column for are priced as oval
+// (largest dimension). Cabochons, MIX, NA and free sizes stay unpriced.
+const FACETED_AS_OVAL = Object.fromEntries(
+  ['EM CUT', 'SQ EM CUT', 'HEART', 'SQUARE', 'SQUARE CUSHION', 'BAGUETTE', 'BAGGUATE', 'BG', 'MARQUISE', 'OCTOGON', 'TRAPEZOID',
+    'ASSCHER', 'PRINCESS', 'PRINCESS CUT', 'RADIANT', 'RECTANGLE', 'TAPER', 'TAPPER'].map((s) => [s, 'OVAL']),
+);
+const AS_OVAL = { ...FACETED_AS_OVAL, ROUND: 'OVAL', RD: 'OVAL', TRIANGLE: 'OVAL', TRILLION: 'OVAL', TRI: 'OVAL', CUSHION: 'OVAL', CU: 'OVAL' };
 const PRICE_AS_SHAPE: Record<string, Record<string, string>> = {
   RUBY: AS_OVAL,
   SAPPHIRE: AS_OVAL,
@@ -222,7 +257,7 @@ const PRICE_AS_SHAPE: Record<string, Record<string, string>> = {
 // The user's rule (2026-11-10): every other colour stone (all chart
 // commodities but Diamond, whose fancy group prices cushion itself) that is
 // cushion (CU) or trillion is priced as oval too. Triangle keeps its own column.
-const CU_TRILLION_AS_OVAL = { CUSHION: 'OVAL', CU: 'OVAL', TRILLION: 'OVAL' };
+const CU_TRILLION_AS_OVAL = { ...FACETED_AS_OVAL, CUSHION: 'OVAL', CU: 'OVAL', TRILLION: 'OVAL' };
 export const pricedAsShape = (chartCommodity: string, shape: string | null) =>
   (shape && (PRICE_AS_SHAPE[chartCommodity] ?? (chartCommodity === 'DIAMOND' ? undefined : CU_TRILLION_AS_OVAL))?.[shape]) || null;
 
@@ -297,14 +332,21 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
 
   // Invoiced labour by class.
   const byClass = new Map<LabourClass, number>();
+  const rowsOf = new Map<LabourClass, LabourInput[]>();
   const notInChart: { process: string; amount: number }[] = [];
   const settingRows: LabourInput[] = [];
   for (const l of line.labour) {
     const c = classifyProcess(l.process);
-    if (c) byClass.set(c, (byClass.get(c) ?? 0) + l.amount);
-    else if (l.amount !== 0) notInChart.push({ process: l.process, amount: l.amount });
+    if (c) {
+      byClass.set(c, (byClass.get(c) ?? 0) + l.amount);
+      rowsOf.set(c, [...(rowsOf.get(c) ?? []), l]);
+    } else if (l.amount !== 0) notInChart.push({ process: l.process, amount: l.amount });
     if (c === 'SETTING') settingRows.push(l);
   }
+  // A class priced only where charted, with no chart rate: back to "not in chart".
+  const uncharted = (c: LabourClass) => {
+    for (const l of rowsOf.get(c) ?? []) if (l.amount !== 0) notInChart.push({ process: l.process, amount: l.amount });
+  };
 
   // ---- metal ----
   const grams = sum(line.metal.map((m) => m.grams));
@@ -335,23 +377,31 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
     if (!range) metal.issue = 'NO_WEIGHT_RANGE';
     else {
       Object.assign(metal, { rangeId: range.id, wtFrom: range.wtFrom, wtTo: range.wtTo, variant });
+      const margin = rangeMargin(range);
       const basicCode = line.qty < 5 ? 'BASIC_UNDER_5' : 'BASIC_5_UP';
-      const charge = (code: string, invoiced: number): ChargeComparison => {
+      const charge = (cls: LabourClass, code: string, invoiced: number): ChargeComparison => {
         const r = metalRate(range.id, code);
         const perPiece = r && r.unit === 'per pc';
+        const rate = r ? round(r.rate * margin) : null;
         return {
           code,
+          labourClass: cls,
           name: chargeName(code),
           invoiced: round(invoiced),
-          chartRate: r?.rate ?? null,
-          chartAmount: perPiece ? round(r.rate * line.qty) : null,
+          ...(r && margin !== 1 ? { baseRate: r.rate, margin } : {}),
+          chartRate: rate,
+          chartAmount: perPiece ? round(rate! * line.qty) : null,
           note: !r ? 'No chart rate for this weight range' : perPiece ? null : `Chart rate is ${r.unit} — not comparable`,
         };
       };
-      metal.charges.push(charge(basicCode, byClass.get('BASIC') ?? 0));
+      metal.charges.push(charge('BASIC', basicCode, byClass.get('BASIC') ?? 0));
       for (const c of ADD_ONS) {
         const invoiced = byClass.get(c) ?? 0;
-        if (invoiced !== 0) metal.charges.push(charge(c, invoiced));
+        if (invoiced === 0) continue;
+        const codes = chartChargesOf(c);
+        const code = codes.find((x) => metalRate(range.id, x)) ?? codes[0];
+        if (ONLY_WHEN_CHARTED.has(c) && !metalRate(range.id, code)) uncharted(c);
+        else metal.charges.push(charge(c, code, invoiced));
       }
     }
   }
@@ -359,7 +409,9 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
     // Keep invoiced metal labour visible even when the chart can't price it.
     for (const c of ['BASIC' as LabourClass, ...ADD_ONS]) {
       const invoiced = byClass.get(c) ?? 0;
-      if (invoiced !== 0) metal.charges.push({ code: c, name: c === 'BASIC' ? 'Basic' : chargeName(c), invoiced: round(invoiced), chartRate: null, chartAmount: null, note: null });
+      if (invoiced === 0) continue;
+      if (ONLY_WHEN_CHARTED.has(c)) uncharted(c);
+      else metal.charges.push({ code: c, labourClass: c, name: c === 'BASIC' ? 'Basic' : chargeName(chartChargesOf(c)[0]), invoiced: round(invoiced), chartRate: null, chartAmount: null, note: null });
     }
   }
 

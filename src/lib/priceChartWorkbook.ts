@@ -42,6 +42,9 @@ const HEADERS = {
   settingRatesLead: ['Rate group', 'Wt from (ct)', 'Wt to (ct)', 'Size (mm)', 'Max mm', 'Max mm (round)'],
 };
 
+// Optional on upload: workbooks downloaded before it existed have no such row.
+const DEFAULT_FOR_FIELD = 'Default for company ids';
+
 const CHART_FIELDS: [string, keyof PriceChart | 'alloyNotes'][] = [
   ['Code', 'code'],
   ['Name', 'name'],
@@ -50,7 +53,12 @@ const CHART_FIELDS: [string, keyof PriceChart | 'alloyNotes'][] = [
   ['Currency', 'currency'],
   ['Effective date (yyyy-mm-dd)', 'effectiveDate'],
   ['Alloy note', 'alloyNotes'],
+  [DEFAULT_FOR_FIELD, 'defaultFor'],
 ];
+
+// Metal Rates: multiplier on all rates of the row, just before Note. Optional on
+// upload so workbooks downloaded before it existed still load.
+const MARGIN_HEADER = 'Margin (×)';
 
 const list = (values: string[] | undefined) => (values ?? []).join(', ');
 const slug = (s: string) => s.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -88,13 +96,15 @@ export async function chartToWorkbook(chart: PriceChart): Promise<Buffer> {
     ['Wt to empty = no upper limit. Setting Rates: give Wt from/to in carats, or — for stones priced by size — leave them empty and give Max mm (largest stone dimension) and Max mm (round) (diameter of a round stone).'],
     ['Rate columns end in [CODE] — that code must exist on the Charge Types / Setting Types sheet.'],
     ['A metal rate can be a number or "<number> per <unit>", e.g. "0.35 per link".'],
+    [`Metal Rates "${MARGIN_HEADER}": multiplier applied to every rate of that row (e.g. 0.95); leave empty for none.`],
     ['Product types, shapes, setting types and commodities are matched by name to the ERP masters of the selected company.'],
     ['Lists (sections, shapes, names…) are comma separated. The Code on the Chart sheet must stay the same.'],
+    [`Chart "${DEFAULT_FOR_FIELD}": ERP company ids whose Labour vs Chart report uses this chart by default (comma separated); empty = default for every other company.`],
   ], [120]);
 
   addSheet(wb, SHEETS.chart, HEADERS.chart, CHART_FIELDS.map(([label, key]) => [
     label,
-    key === 'alloyNotes' ? m.alloyNotes.join(' | ') : String(chart[key]),
+    key === 'alloyNotes' ? m.alloyNotes.join(' | ') : key === 'defaultFor' ? (chart.defaultFor ?? []).join(', ') : String(chart[key]),
   ]), [30, 60]);
 
   addSheet(wb, SHEETS.goldLoss, HEADERS.goldLoss, m.goldLoss.map((g) => [g.style, g.styleZh, g.karats, g.pct]));
@@ -106,7 +116,7 @@ export async function chartToWorkbook(chart: PriceChart): Promise<Buffer> {
   addSheet(
     wb,
     SHEETS.metalRates,
-    [...HEADERS.metalRatesLead, ...m.chargeTypes.map((t) => rateCol(t.name, t.code)), 'Note'],
+    [...HEADERS.metalRatesLead, ...m.chargeTypes.map((t) => rateCol(t.name, t.code)), MARGIN_HEADER, 'Note'],
     m.weightRanges.map((r) => [
       r.productType,
       r.variant,
@@ -116,9 +126,10 @@ export async function chartToWorkbook(chart: PriceChart): Promise<Buffer> {
         const rate = metalRate.get(`${r.id}|${t.code}`);
         return rate ? (rate.unit === 'per pc' ? rate.rate : `${rate.rate} ${rate.unit}`) : null;
       }),
+      r.margin ?? null,
       r.note,
     ]),
-    [22, 16, 12, 12, ...m.chargeTypes.map(() => 16), 40],
+    [22, 16, 12, 12, ...m.chargeTypes.map(() => 16), 12, 40],
   );
 
   addSheet(wb, SHEETS.alloy, HEADERS.alloy, m.alloy.map((a) => [a.metal, a.pricePerGm]), [28, 14]);
@@ -260,6 +271,11 @@ export async function workbookToChart(buffer: ArrayBuffer, expectedCode: string,
   const effectiveDate = text(field('Effective date (yyyy-mm-dd)'));
   if (effectiveDate && !/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate)) problems.push(`${SHEETS.chart}: Effective date "${effectiveDate}" must be yyyy-mm-dd`);
   const alloyNote = text(field('Alloy note'));
+  const defaultFor = csv(fields.get(DEFAULT_FOR_FIELD) ?? null).map((v) => {
+    const id = Number(v);
+    if (!Number.isInteger(id) || id <= 0) problems.push(`${SHEETS.chart}: ${DEFAULT_FOR_FIELD} "${v}" is not a company id`);
+    return id;
+  });
 
   // ---- Metal chart ----
   const goldLoss = readSheet(SHEETS.goldLoss, HEADERS.goldLoss).rows.map(({ n, cells }) => ({
@@ -287,7 +303,8 @@ export async function workbookToChart(buffer: ArrayBuffer, expectedCode: string,
   });
 
   const metalSheet = readSheet(SHEETS.metalRates, HEADERS.metalRatesLead);
-  const metalRateCols = metalSheet.header.slice(HEADERS.metalRatesLead.length, metalSheet.header.length - 1);
+  const hasMargin = metalSheet.header[metalSheet.header.length - 2] === MARGIN_HEADER;
+  const metalRateCols = metalSheet.header.slice(HEADERS.metalRatesLead.length, metalSheet.header.length - (hasMargin ? 2 : 1));
   if (metalSheet.header.length && metalSheet.header[metalSheet.header.length - 1] !== 'Note') problems.push(`${SHEETS.metalRates}: last column header should be "Note"`);
   const metalColCodes = metalRateCols.map((h) => {
     const c = codeOf(h);
@@ -304,7 +321,9 @@ export async function workbookToChart(buffer: ArrayBuffer, expectedCode: string,
     const wtFrom = num(cells[2], where, 'Wt from', { required: true }) ?? 0;
     const wtTo = num(cells[3], where, 'Wt to');
     const id = weightRangeId(productType, variant, weightRanges.filter((r) => r.productType === productType && r.variant === variant).length + 1);
-    weightRanges.push({ id, productType, variant, wtFrom, wtTo, note: optText(cells[cells.length - 1]) });
+    const margin = hasMargin ? num(cells[cells.length - 2], where, MARGIN_HEADER) : null;
+    if (margin != null && margin <= 0) problems.push(`${where}: ${MARGIN_HEADER} must be above 0 (leave it empty for none)`);
+    weightRanges.push({ id, productType, variant, wtFrom, wtTo, ...(margin != null ? { margin } : {}), note: optText(cells[cells.length - 1]) });
     metalColCodes.forEach((chargeType, i) => {
       const raw = cells[HEADERS.metalRatesLead.length + i];
       if (raw == null || !chargeType) return;
@@ -429,6 +448,7 @@ export async function workbookToChart(buffer: ArrayBuffer, expectedCode: string,
     metal: text(field('Metal')),
     currency: text(field('Currency')),
     effectiveDate,
+    ...(defaultFor.length ? { defaultFor } : {}),
     source: { file: fileName, sheet: 'MIS chart workbook', importedAt: new Date().toISOString().slice(0, 10) },
     metalChart: {
       goldLoss,

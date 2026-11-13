@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import ChartHeader, { useSelectedChart } from '@/components/priceChart/ChartHeader';
 import { useMasters } from '@/components/priceChart/useMasters';
-import { findRange, metalRateIndex, type PriceChart } from '@/lib/priceChart';
+import { findRange, metalRateIndex, rangeMargin, type PriceChart } from '@/lib/priceChart';
 import type { PriceChartSummary } from '@/lib/priceChartStore';
 import { fmtNum } from '@/lib/format';
 
@@ -52,6 +52,7 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
   const basic = metal.chargeTypes.filter((t) => t.group === 'Basic charge');
   const addOns = metal.chargeTypes.filter((t) => t.group === 'Add-on');
   const rateColumns = [...basic, ...addOns];
+  const hasMargin = metal.weightRanges.some((r) => rangeMargin(r) !== 1);
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -115,6 +116,7 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
                 <div className="mt-3">
                   <p className="text-sm text-slate-700">
                     Wt <b>{wt(matched.wtFrom)} – {wt(matched.wtTo)} g</b>
+                    {rangeMargin(matched) !== 1 && <span className="text-slate-700"> · margin × {fmtNum(rangeMargin(matched), 2)}</span>}
                     {matched.note && <span className="text-slate-500"> — {matched.note}</span>}
                   </p>
                   <dl className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
@@ -123,7 +125,12 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
                       return (
                         <div key={t.code}>
                           <dt className="text-[11px] uppercase tracking-wide text-slate-400">{t.name}</dt>
-                          <dd className="text-sm tabular-nums">{r ? `${fmtNum(r.rate)}${r.unit !== 'per pc' ? ` ${r.unit}` : ''}` : '—'}</dd>
+                          <dd className="text-sm tabular-nums">
+                            {r ? `${rangeMargin(matched) === 1 ? fmtNum(r.rate) : fmtNum(r.rate * rangeMargin(matched), 4)}${r.unit !== 'per pc' ? ` ${r.unit}` : ''}` : '—'}
+                            {r && rangeMargin(matched) !== 1 && (
+                              <span className="block text-[11px] text-slate-400">{fmtNum(r.rate, 4)} × {fmtNum(rangeMargin(matched), 2)}</span>
+                            )}
+                          </dd>
                         </div>
                       );
                     })}
@@ -161,6 +168,7 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
                 <th rowSpan={2} className="px-3 py-1.5 text-right font-medium align-bottom whitespace-nowrap">Wt to (g)</th>
                 <th colSpan={basic.length} className="px-3 pt-1.5 text-center font-medium border-b border-slate-200">Basic charge</th>
                 <th colSpan={addOns.length} className="px-3 pt-1.5 text-center font-medium border-b border-slate-200">Add-ons</th>
+                {hasMargin && <th rowSpan={2} className="px-3 py-1.5 text-right font-medium align-bottom">Margin (×)</th>}
                 <th rowSpan={2} className="px-3 py-1.5 text-left font-medium align-bottom">Note</th>
               </tr>
               <tr>
@@ -200,6 +208,9 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
                         </td>
                       );
                     })}
+                    {hasMargin && (
+                      <td className="px-3 py-1.5 text-right tabular-nums">{r.margin != null ? fmtNum(r.margin, 2) : <span className="text-slate-300">—</span>}</td>
+                    )}
                     <td className="px-3 py-1.5 text-xs text-slate-500 max-w-xs">{r.note}</td>
                   </tr>
                 ));
@@ -209,6 +220,7 @@ function MetalChartView({ chart, charts, onSelect }: { chart: PriceChart; charts
         </div>
         <p className="mt-2 text-xs text-slate-500">
           Product types are matched by name to the ERP product type master (shared by all companies). A weight on a range boundary (e.g. 3 g) uses the lower range.
+          {hasMargin && ' Margin multiplies every rate of its row (e.g. 14.375 × 0.95 = 13.66 per pc); the comparison uses the result.'}
         </p>
       </Section>
 

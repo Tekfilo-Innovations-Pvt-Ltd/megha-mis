@@ -1,5 +1,4 @@
 import {
-  ADD_ONS,
   classifyProcess,
   METAL_ISSUE_TEXT,
   STONE_ISSUE_TEXT,
@@ -130,8 +129,6 @@ const settingKind = (process: string): StoneSectionKind => {
   const n = process.toLowerCase();
   return n.includes('side') ? 'SIDE' : /cent(er|re)/.test(n) ? 'CENTER' : 'ANY';
 };
-const metalClass = (code: string): LabourClass | null =>
-  code.startsWith('BASIC') ? 'BASIC' : (ADD_ONS as string[]).includes(code) ? (code as LabourClass) : null;
 
 export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: PriceChart): LabourBreakupRow[] {
   const byProcess = new Map<string, { process: string; cls: LabourClass | null; invoice: number; chart: number | null; parts: (ChartCalcPart | null)[] }>();
@@ -149,7 +146,7 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
   // Metal charges → the first process of their class.
   for (const ch of c.metal.charges) {
     if (ch.chartAmount == null) continue;
-    const cls = metalClass(ch.code);
+    const cls = ch.labourClass;
     const target = rows.find((r) => r.cls === cls && cls != null);
     const part = chargePart(ch, c, input);
     if (target) {

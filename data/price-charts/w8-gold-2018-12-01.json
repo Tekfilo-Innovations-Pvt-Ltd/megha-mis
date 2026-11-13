@@ -8,7 +8,7 @@
   "source": {
     "file": "labor-chart.xls",
     "sheet": "Labor",
-    "importedAt": "2026-10-22"
+    "importedAt": "2026-11-13"
   },
   "metalChart": {
     "goldLoss": [
@@ -55,6 +55,11 @@
         "code": "BRACELET",
         "name": "Bracelet",
         "nameZh": "手链"
+      },
+      {
+        "code": "BANGLE",
+        "name": "BANGLE",
+        "nameZh": "手镯"
       }
     ],
     "chargeTypes": [
@@ -83,6 +88,12 @@
         "group": "Add-on"
       },
       {
+        "code": "COVER_BACK",
+        "name": "Cover back",
+        "nameZh": "网底/影底",
+        "group": "Add-on"
+      },
+      {
         "code": "SOLDERING",
         "name": "Soldering",
         "nameZh": "分件",
@@ -95,9 +106,21 @@
         "group": "Add-on"
       },
       {
+        "code": "PLATING",
+        "name": "Plating",
+        "nameZh": "电金",
+        "group": "Add-on"
+      },
+      {
         "code": "TWO_TONE",
         "name": "Two tone",
         "nameZh": "分色",
+        "group": "Add-on"
+      },
+      {
+        "code": "LASER_STAMPING",
+        "name": "Laser stamping",
+        "nameZh": "镭射字印",
         "group": "Add-on"
       }
     ],
@@ -284,6 +307,24 @@
         "variant": null,
         "wtFrom": 15,
         "wtTo": null,
+        "note": null
+      },
+      {
+        "id": "BANGLE-1",
+        "productType": "BANGLE",
+        "variant": null,
+        "wtFrom": 0,
+        "wtTo": 15,
+        "margin": 0.95,
+        "note": "From Labour Bangle sheet (W8 invoices 2025-03 → 2026-08): rates = bracelet basic × 1.15, plating = rhodium × 1.35; margin 0.95 on all charges. Plating is for white gold only. The factory picks the heavy basic by style (G009 at ~14 g was billed 19.757 in 2025)."
+      },
+      {
+        "id": "BANGLE-2",
+        "productType": "BANGLE",
+        "variant": null,
+        "wtFrom": 15,
+        "wtTo": null,
+        "margin": 0.95,
         "note": null
       }
     ],
@@ -1211,6 +1252,78 @@
         "chargeType": "TWO_TONE",
         "rate": 7.2,
         "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 14.375,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "BASIC_5_UP",
+        "rate": 14.375,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "COVER_BACK",
+        "rate": 2.26,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "SOLDERING",
+        "rate": 2.3,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "PLATING",
+        "rate": 3.402,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "BASIC_UNDER_5",
+        "rate": 19.757,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "BASIC_5_UP",
+        "rate": 19.757,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "COVER_BACK",
+        "rate": 2.26,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "SOLDERING",
+        "rate": 2.5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "PLATING",
+        "rate": 5.589,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BANGLE-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
       }
     ],
     "alloy": [
@@ -1475,9 +1588,9 @@
     "rateGroups": [
       {
         "code": "DIAMOND_ROUND",
-        "section": "SIDE",
         "name": "Diamond - Round",
         "nameZh": "钻石--圆形",
+        "section": "SIDE",
         "shapes": [
           "ROUND"
         ],
@@ -1485,9 +1598,9 @@
       },
       {
         "code": "DIAMOND_FANCY",
-        "section": "SIDE",
         "name": "Diamond - MQ, TP/BG, PE, CU, OCT, SQ",
         "nameZh": "钻石--马眼, 梯形, 梨形, 枕形,八角, 正方形",
+        "section": "SIDE",
         "shapes": [
           "MARQUISE",
           "TAPER",
@@ -1501,9 +1614,9 @@
       },
       {
         "code": "SEMI_PRECIOUS",
-        "section": "CENTER",
         "name": "RBL, Kynite, Morganite, Aqua, Garnet, Topaz, Blue Zircon, Peridot Green Garnet & semi-precious (round, oval, pear,triangle)",
         "nameZh": "碧玺, 天然蓝晶, 摩根石, 海蓝宝, 加力, 瑞士蓝, 天然蓝锆等其他天然晶石 (圆形，旦形，梨形，三角形)",
+        "section": "CENTER",
         "shapes": [
           "ROUND",
           "OVAL",
@@ -1514,9 +1627,9 @@
       },
       {
         "code": "RUBY_SAPPHIRE",
-        "section": "CENTER",
         "name": "Ruby, Sapphire, Fancy Sapphire (round, oval, pear,triangle)",
         "nameZh": "红宝, 蓝宝, 彩蓝宝 (圆形，旦形，梨形，三角形)",
+        "section": "CENTER",
         "shapes": [
           "ROUND",
           "OVAL",
@@ -1527,9 +1640,9 @@
       },
       {
         "code": "EMERALD_TANZANITE",
-        "section": "CENTER",
         "name": "Emerald,Tanzanite (round, oval, pear,triangle)",
         "nameZh": "绿宝, 橄榄石, 绿加力, 坦桑 (圆形，旦形，梨形，三角形)",
+        "section": "CENTER",
         "shapes": [
           "ROUND",
           "OVAL",
@@ -1540,9 +1653,9 @@
       },
       {
         "code": "OPAL",
-        "section": "CENTER",
         "name": "Opal (round, oval, pear,triangle)",
         "nameZh": "澳宝 (圆形，旦形，梨形，三角形)",
+        "section": "CENTER",
         "shapes": [
           "ROUND",
           "OVAL",
@@ -1562,6 +1675,12 @@
           "DIAMOND_FANCY"
         ],
         "match": {
+          "contains": [
+            "LAB GROWN DIAMOND",
+            "LABGROWN DIAMOND",
+            "LAB GROWN DIA",
+            "LGD"
+          ],
           "groups": [
             "DIAMOND",
             "CERTIFIED DIAMOND",
@@ -1678,6 +1797,10 @@
           "SEMI_PRECIOUS"
         ],
         "match": {
+          "contains": [
+            "LAB GROWN ALEX",
+            "LABGROWN ALEX"
+          ],
           "groups": [
             "SEMI PRECIOUS STONE"
           ]
@@ -1719,12 +1842,12 @@
           "RUBY_SAPPHIRE"
         ],
         "match": {
-          "groups": [
-            "SAPPHIRE"
-          ],
           "contains": [
             "SAPPHIRE",
             "SAPPIRE"
+          ],
+          "groups": [
+            "SAPPHIRE"
           ],
           "exclude": [
             "LAB GROWN",

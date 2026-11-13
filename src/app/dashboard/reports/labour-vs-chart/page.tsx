@@ -16,6 +16,7 @@ import type { LabourReport, LotReport, ReportSort, ReportStatusFilter } from '@/
 import type { LineComparison } from '@/lib/labourComparison';
 import { fmtDate, fmtNum } from '@/lib/format';
 import { settingNotCountedRemark } from '@/lib/jobWorkBlocks';
+import type { PriceChartSummary } from '@/lib/priceChartStore';
 
 type ReportResponse = LabourReport & { chart: { code: string; name: string; currency: string } };
 type LotResponse = LotReport & { chart: { code: string; name: string; currency: string } };
@@ -107,13 +108,14 @@ function Breakdown({ title, rows, currency }: { title: string; rows: LabourRepor
 }
 
 type LineResponse = { comparison: LineComparison; calcs: LineCalcs };
-const lineQuery = (invDetId: number) => ({
-  queryKey: ['labour-line', invDetId],
-  queryFn: () => getJson<LineResponse>(`/api/reports/labour-vs-chart/line/${invDetId}`),
+// chart: the code the report was worked out with, so the drill-down matches it.
+const lineQuery = (invDetId: number, chart: string) => ({
+  queryKey: ['labour-line', invDetId, chart],
+  queryFn: () => getJson<LineResponse>(`/api/reports/labour-vs-chart/line/${invDetId}?${new URLSearchParams({ chart })}`),
 });
 
-function LineDrilldown({ invDetId, currency }: { invDetId: number; currency: string }) {
-  const { data, isLoading, error } = useQuery(lineQuery(invDetId));
+function LineDrilldown({ invDetId, chart, currency }: { invDetId: number; chart: string; currency: string }) {
+  const { data, isLoading, error } = useQuery(lineQuery(invDetId, chart));
   if (isLoading) return <p className="text-sm text-slate-500">Loading…</p>;
   if (error || !data) return <p className="text-sm text-red-600">{(error as Error)?.message ?? 'Could not load the line'}</p>;
   return <LineComparisonDetail comparison={data.comparison} currency={currency} calcs={data.calcs} />;
@@ -121,9 +123,9 @@ function LineDrilldown({ invDetId, currency }: { invDetId: number; currency: str
 
 // A chart amount on a Lines row: its working is the line's, fetched on click
 // (and shared with the drill-down).
-function LineChartAmount({ invDetId, value, pick, currency }: { invDetId: number; value: number; pick: (c: LineCalcs) => ChartCalc | null; currency: string }) {
+function LineChartAmount({ invDetId, chart, value, pick, currency }: { invDetId: number; chart: string; value: number; pick: (c: LineCalcs) => ChartCalc | null; currency: string }) {
   const queryClient = useQueryClient();
-  return <ChartAmount value={value} currency={currency} getCalc={() => queryClient.fetchQuery(lineQuery(invDetId)).then((d) => pick(d.calcs))} />;
+  return <ChartAmount value={value} currency={currency} getCalc={() => queryClient.fetchQuery(lineQuery(invDetId, chart)).then((d) => pick(d.calcs))} />;
 }
 
 export default function LabourVsChartPage() {
@@ -143,6 +145,7 @@ export default function LabourVsChartPage() {
   const [jewNo, setJewNo] = useState('');
   const [bagNoInput, setBagNoInput] = useState('');
   const [bagNo, setBagNo] = useState('');
+  const [chartCode, setChartCode] = useState(''); // '' = the company's default chart
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [sort, setSort] = useState<ReportSort>('variance');
   const [page, setPage] = useState(0);
@@ -183,7 +186,7 @@ export default function LabourVsChartPage() {
     return () => clearTimeout(t);
   }, [bagNoInput]);
 
-  const filterParams = { from, to, productType, jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, status, sort };
+  const filterParams = { ...(chartCode ? { chart: chartCode } : {}), from, to, productType, jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, status, sort };
   const group = tableView === 'skus' ? 'sku' : 'line';
   const reportQuery = new URLSearchParams({ ...filterParams, group, page: String(page), size: String(pageSize) }).toString();
   const downloadUrl =
@@ -198,12 +201,19 @@ export default function LabourVsChartPage() {
   useEffect(() => {
     setPage(0);
     setOpen(null);
-  }, [companyId, from, to, productType, jobCategory, sku, skuExact, invNo, jewNo, bagNo, status, sort, pageSize, group]);
+  }, [companyId, chartCode, from, to, productType, jobCategory, sku, skuExact, invNo, jewNo, bagNo, status, sort, pageSize, group]);
   useEffect(() => setPageInput(String(page + 1)), [page]);
   useEffect(() => {
     setProductType('');
     setJobCategory(DEFAULT_JOB_CATEGORY);
+    setChartCode(''); // each company starts on its own default chart
   }, [companyId]);
+  // Charts to compare with — the company's default first.
+  const charts = useQuery({
+    queryKey: ['price-charts', companyId],
+    queryFn: () => getJson<PriceChartSummary[]>('/api/price-charts'),
+    enabled: companyId != null,
+  });
 
   const report = useQuery({
     queryKey: ['labour-vs-chart', companyId, reportQuery],
@@ -263,7 +273,25 @@ export default function LabourVsChartPage() {
     // The lot detail and job work views are wide, so they get the full width of the screen.
     <div className={`space-y-4 ${tableView === 'lots' || tableView === 'jobwork' ? '' : 'max-w-7xl'}`}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Labour vs Chart</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold text-slate-900">Labour vs Chart</h1>
+          {(charts.data?.length ?? 0) > 1 && (
+            <label className="text-sm text-slate-600 flex items-center gap-2">
+              Chart
+              <select
+                value={chartCode}
+                onChange={(e) => setChartCode(e.target.value)}
+                className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              >
+                {charts.data!.map((c, i) => (
+                  <option key={c.code} value={i === 0 ? '' : c.code}>
+                    {c.name}{i === 0 ? ' (default)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
         <p className="text-sm text-slate-500">
           Factory-invoice labour compared with the factory price chart — metal labour from the Metal Chart, stone setting from the Setting Chart.
         </p>
@@ -496,17 +524,17 @@ export default function LabourVsChartPage() {
                           <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.qty, 0)}</td>
                           <td className="px-3 py-2 text-right tabular-nums">{r.gramsPerPiece != null ? fmtNum(r.gramsPerPiece, 3) : '—'}</td>
                           <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-                            {r.metalChart > 0 ? <>{fmtNum(r.metalInvoiced)} / <LineChartAmount invDetId={r.invDetId} value={r.metalChart} pick={(c) => c.metal} currency={currency} /></> : '—'}
+                            {r.metalChart > 0 ? <>{fmtNum(r.metalInvoiced)} / <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.metalChart} pick={(c) => c.metal} currency={currency} /></> : '—'}
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-                            {r.settingChart > 0 ? <>{fmtNum(r.settingInvoiced)} / <LineChartAmount invDetId={r.invDetId} value={r.settingChart} pick={(c) => c.setting} currency={currency} /></> : '—'}
+                            {r.settingChart > 0 ? <>{fmtNum(r.settingInvoiced)} / <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.settingChart} pick={(c) => c.setting} currency={currency} /></> : '—'}
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
                             {fmtNum(r.invoicedLabour)}
                             {r.status !== 'NOT_COMPARABLE' && r.invoicedCompared !== r.invoicedLabour && <span className="block text-xs text-slate-500">{fmtNum(r.invoicedCompared)} compared</span>}
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums">
-                            {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} value={r.chartTotal} pick={(c) => c.total} currency={currency} />}
+                            {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.chartTotal} pick={(c) => c.total} currency={currency} />}
                           </td>
                           <td className="px-3 py-2 text-right">{r.status === 'NOT_COMPARABLE' ? '—' : <Variance value={r.variance} />}</td>
                           <td className="px-3 py-2 text-right">{r.status === 'NOT_COMPARABLE' ? '—' : <VariancePct pct={r.variancePct} />}</td>
@@ -525,7 +553,7 @@ export default function LabourVsChartPage() {
                         {isOpen && (
                           <tr className="bg-slate-50/70">
                             <td />
-                            <td colSpan={12} className="px-3 py-3"><LineDrilldown invDetId={r.invDetId} currency={currency} /></td>
+                            <td colSpan={12} className="px-3 py-3"><LineDrilldown invDetId={r.invDetId} chart={data.chart.code} currency={currency} /></td>
                           </tr>
                         )}
                       </Fragment>

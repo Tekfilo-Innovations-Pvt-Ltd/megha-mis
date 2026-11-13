@@ -44,12 +44,15 @@ describe('classifyProcess', () => {
     expect(classifyProcess('Basic胚底')).toBe('BASIC');
     expect(classifyProcess('总胚底Total Basic')).toBeNull();
     expect(classifyProcess('Basic +CAD new pic')).toBeNull();
-    expect(classifyProcess('Cover Back 网底')).toBe('J_BACK');
+    expect(classifyProcess('Cover Back 网底')).toBe('COVER_BACK');
+    expect(classifyProcess('coverback影底')).toBe('COVER_BACK');
     expect(classifyProcess('solder 嵌件')).toBe('SOLDERING');
     expect(classifyProcess('Two-tone 分色')).toBe('TWO_TONE');
     expect(classifyProcess('rhodium black 電黑金')).toBe('RHODIUM');
     expect(classifyProcess('Center Stone Setting')).toBe('SETTING');
-    expect(classifyProcess('Plating 电金')).toBeNull();
+    expect(classifyProcess('Plating 电金')).toBe('PLATING');
+    expect(classifyProcess('Laser stampping镭射字印')).toBe('LASER_STAMPING');
+    expect(classifyProcess('Laser stamping')).toBe('LASER_STAMPING');
     expect(classifyProcess('CPF')).toBe('BASIC');
     expect(classifyProcess('CPF+ Setting + Rhodium ')).toBeNull();
     expect(classifyProcess('Wire & Solder')).toBe('SOLDERING');
@@ -63,9 +66,59 @@ describe('compareLine', () => {
     expect(r.metal.gramsPerPiece).toBeCloseTo(2.4167, 4);
     expect(r.metal).toMatchObject({ wtFrom: 0, wtTo: 3 });
     expect(r.metal.charges).toEqual([
-      { code: 'BASIC_5_UP', name: 'Basic — 5 pcs up per style', invoiced: 29.25, chartRate: 3.71, chartAmount: 18.55, note: null },
+      { code: 'BASIC_5_UP', labourClass: 'BASIC', name: 'Basic — 5 pcs up per style', invoiced: 29.25, chartRate: 3.71, chartAmount: 18.55, note: null },
     ]);
     expect(r.notInChart).toEqual([{ process: 'Alloy', amount: 3.17 }]);
+  });
+
+  it('prices cover back on the J-back column where the range has no Cover back rate', () => {
+    const r = compareLine({ ...ringLine, labour: [...ringLine.labour, { process: 'Cover Back 网底', amount: 6 }] }, chart, options);
+    expect(r.metal.charges.find((c) => c.labourClass === 'COVER_BACK')).toMatchObject({ code: 'J_BACK', chartRate: 1.13, chartAmount: 5.65 });
+  });
+
+  it('leaves plating and laser stamping "not in chart" where the range has no rate for them', () => {
+    const labour = [...ringLine.labour, { process: 'Plating 电金', amount: 4 }, { process: 'Laser stampping镭射字印', amount: 2.5 }];
+    const r = compareLine({ ...ringLine, labour }, chart, options);
+    expect(r.metal.charges.map((c) => c.labourClass)).toEqual(['BASIC']);
+    expect(r.notInChart).toEqual([{ process: 'Alloy', amount: 3.17 }, { process: 'Plating 电金', amount: 4 }, { process: 'Laser stampping镭射字印', amount: 2.5 }]);
+    expect(r.partial).toBe(false);
+  });
+
+  it("applies the weight range's margin to every charge", () => {
+    const withMargin: PriceChart = {
+      ...chart,
+      metalChart: {
+        ...chart.metalChart,
+        chargeTypes: [...chart.metalChart.chargeTypes, { code: 'PLATING', name: 'Plating', nameZh: null, group: 'Add-on' }],
+        weightRanges: [{ id: 'BANGLE-1', productType: 'BANGLE', variant: null, wtFrom: 0, wtTo: 15, margin: 0.95, note: null }],
+        productTypes: [{ code: 'BANGLE', name: 'BANGLE', nameZh: null }],
+        rates: [
+          { rangeId: 'BANGLE-1', chargeType: 'BASIC_5_UP', rate: 14.375, unit: 'per pc' },
+          { rangeId: 'BANGLE-1', chargeType: 'PLATING', rate: 3.402, unit: 'per pc' },
+        ],
+      },
+    };
+    const bangle: LineInput = {
+      ...ringLine,
+      qty: 6,
+      productType: 'BANGLE',
+      metal: [{ commodity: 'GOLD', grams: 53.483 }],
+      labour: [{ process: 'Basic 胚底', amount: 81.94 }, { process: 'Plating 电金', amount: 19.39 }],
+      stones: [],
+    };
+    const r = compareLine(bangle, withMargin, options);
+    expect(r.metal.charges).toMatchObject([
+      { code: 'BASIC_5_UP', baseRate: 14.375, margin: 0.95, chartRate: 13.6563, chartAmount: 81.9378 },
+      { code: 'PLATING', labourClass: 'PLATING', baseRate: 3.402, margin: 0.95, chartRate: 3.2319, chartAmount: 19.3914 },
+    ]);
+  });
+
+  it('prices faceted colour-stone shapes without a chart column as oval, and lab-grown diamond as diamond', () => {
+    const line = (st: Partial<StoneInput>) => compareLine({ ...ringLine, labour: [], stones: [stone({ componentId: 1, ...st })] }, chart, options).setting.stones[0];
+    expect(line({ commodity: 'TANZANITE', commodityGroup: 'TANZANITE', shape: 'EM CUT', carats: 1, pieces: 1, mmSize: '7*5' })).toMatchObject({ pricedAsShape: 'OVAL', rateGroup: 'EMERALD_TANZANITE', issue: null });
+    expect(line({ commodity: 'RUBY', commodityGroup: 'RUBY', shape: 'BAGUETTE', carats: 0.1, pieces: 1, mmSize: '4*2' })).toMatchObject({ pricedAsShape: 'OVAL', issue: null });
+    expect(line({ commodity: 'OPAL', commodityGroup: 'OPAL', shape: 'CAB', carats: 1, pieces: 1, mmSize: '7*5' }).issue).toBe('NO_SHAPE');
+    expect(line({ commodity: 'LAB GROWN DIAMOND', commodityGroup: 'LAB GROWN', carats: 0.01, pieces: 1 })).toMatchObject({ chartCommodity: 'DIAMOND', rateGroup: 'DIAMOND_ROUND', issue: null });
   });
 
   it('uses the under-5 price below 5 pieces', () => {
@@ -131,7 +184,7 @@ describe('compareLine', () => {
 
   it('does not price other metals, other currencies or unknown product types', () => {
     expect(compareLine({ ...ringLine, metal: [{ commodity: 'SILVER', grams: 10 }] }, chart, options).metal.issue).toBe('OTHER_METAL');
-    expect(compareLine({ ...ringLine, productType: 'BANGLE' }, chart, options).metal.issue).toBe('NO_PRODUCT_TYPE');
+    expect(compareLine({ ...ringLine, productType: 'NECKLACE' }, chart, options).metal.issue).toBe('NO_PRODUCT_TYPE');
     const rmb = compareLine({ ...ringLine, currency: 'RMB' }, chart, options);
     expect(rmb.metal.issue).toBe('CURRENCY');
     expect(rmb.status).toBe('NOT_COMPARABLE');

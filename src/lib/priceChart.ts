@@ -26,8 +26,13 @@ export interface WeightRange {
   variant: string | null; // e.g. STUD "Butterfly back" / "Lever back"
   wtFrom: number; // net gold weight in grams
   wtTo: number | null; // null = no upper limit
+  // Multiplier on every rate of the range, as the factory's costing sheets
+  // apply it (e.g. Labour Bangle: Basic 14.375 × margin 0.95). null / absent = 1.
+  margin?: number | null;
   note: string | null;
 }
+
+export const rangeMargin = (r: Pick<WeightRange, 'margin'>) => r.margin ?? 1;
 
 export interface ChargeType extends Named {
   group: 'Basic charge' | 'Add-on';
@@ -156,6 +161,10 @@ export interface PriceChart {
   metal: string;
   currency: string;
   effectiveDate: string; // yyyy-mm-dd
+  // Companies (ERP company ids) whose reports use this chart unless another is
+  // picked. A chart without it is the default for every other company (the
+  // newest such chart). The chart itself still holds no company data.
+  defaultFor?: number[];
   source: { file: string; sheet: string; importedAt: string };
   metalChart: MetalChart;
   settingChart: SettingChart;
@@ -177,8 +186,22 @@ export function settingRateIndex(chart: SettingChart) {
 
 // Range containing a weight. Ranges are listed low → high; a value exactly on a
 // shared boundary (e.g. 3g in 0–3 and 3–7) goes to the lower range.
+//
+// Charts print ranges to their own precision ("0–0.0155", "0.016–0.069"), which
+// leaves small gaps; a value inside a gap goes to the nearer of the two ranges
+// (0.0159 ct → 0.016–0.069). Above the last range there is no match.
 export function findRange<T extends { wtFrom: number | null; wtTo: number | null }>(ranges: T[], value: number): T | undefined {
-  return ranges.find((r) => r.wtFrom != null && value >= r.wtFrom && (r.wtTo == null || value <= r.wtTo));
+  const hit = ranges.find((r) => r.wtFrom != null && value >= r.wtFrom && (r.wtTo == null || value <= r.wtTo));
+  if (hit) return hit;
+  const sorted = ranges.filter((r) => r.wtFrom != null).sort((a, b) => a.wtFrom! - b.wtFrom!);
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const lower = sorted[i];
+    const upper = sorted[i + 1];
+    if (lower.wtTo != null && value > lower.wtTo && value < upper.wtFrom!) {
+      return value - lower.wtTo <= upper.wtFrom! - value ? lower : upper;
+    }
+  }
+  return undefined;
 }
 
 const norm = (s: string) => s.trim().toUpperCase();

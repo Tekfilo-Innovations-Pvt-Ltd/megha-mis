@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getPriceChart, listPriceCharts } from '@/lib/priceChartStore';
+import { getSessionCompanyId } from '@/lib/company';
+import { defaultChartFor, getPriceChart, listPriceCharts } from '@/lib/priceChartStore';
 import type { ComparisonOptions } from '@/lib/labourComparison';
 import type { PriceChart } from '@/lib/priceChart';
 
 // Shared query parameters of the labour-vs-chart endpoints:
-//   chart        price chart code (default: newest chart)
+//   chart        price chart code (default: the session company's default chart — see defaultChartFor)
 //   settingType  chart setting type used for stones the ERP records none for (default PRONG_PAVE)
 //   tolerance    ± % treated as "in line" (default 5)
 export async function resolveComparison(params: URLSearchParams): Promise<{ chart: PriceChart; options: ComparisonOptions } | NextResponse> {
-  const code = params.get('chart') || (await listPriceCharts())[0]?.code;
+  const code = params.get('chart') || defaultChartFor(await listPriceCharts(), await getSessionCompanyId())?.code;
   const chart = code ? await getPriceChart(code) : null;
   if (!chart) {
     return NextResponse.json({ message: 'No factory price chart found' }, { status: 404 });

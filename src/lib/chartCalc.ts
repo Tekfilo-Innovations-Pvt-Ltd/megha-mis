@@ -62,7 +62,12 @@ export function chargePart(ch: ChargeComparison, c: LineComparison, line: Pick<L
   if (ch.code.startsWith('BASIC')) {
     steps.push({ label: 'Basic charge', value: `${ch.name} — line qty ${n(line.qty, 0, 0)} is ${line.qty < 5 ? 'under 5' : '5 or more'}` });
   }
-  steps.push({ label: 'Chart rate', value: `${n(ch.chartRate)} per pc` });
+  steps.push({
+    label: 'Chart rate',
+    value: ch.margin != null && ch.baseRate != null
+      ? `${n(ch.baseRate)} × margin ${n(ch.margin)} = ${n(ch.chartRate)} per pc`
+      : `${n(ch.chartRate)} per pc`,
+  });
   return { title: ch.name, steps, formula: `${n(ch.chartRate)} × ${pcs(line.qty)}`, amount: ch.chartAmount };
 }
 

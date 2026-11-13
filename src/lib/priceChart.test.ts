@@ -12,7 +12,7 @@ const matchName = (name: string, group: string) => matchCommodity(commodities, n
 // Spot checks against cells of the source Excel (Labor sheet).
 describe('imported W8 gold labor chart', () => {
   it('keys metal rows on ERP product types with Wt from / to', () => {
-    expect(c.metalChart.productTypes.map((p) => p.code)).toEqual(['RING', 'EARRINGS', 'STUD', 'PENDANT', 'PENDANT WITH CHAIN', 'BRACELET']);
+    expect(c.metalChart.productTypes.map((p) => p.code)).toEqual(['RING', 'EARRINGS', 'STUD', 'PENDANT', 'PENDANT WITH CHAIN', 'BRACELET', 'BANGLE']);
     const range = ringRanges.find((r) => r.wtFrom === 3 && r.wtTo === 7)!; // row 9 "3-7g"
     expect(metalRate(range.id, 'BASIC_UNDER_5')?.rate).toBe(4.8405); // C9
     expect(metalRate(range.id, 'BASIC_5_UP')?.rate).toBe(4.61); // D9
@@ -40,6 +40,13 @@ describe('imported W8 gold labor chart', () => {
     expect(findRange(ringRanges, 3)?.wtTo).toBe(3);
     expect(findRange(ringRanges, 3.01)?.wtTo).toBe(7);
     expect(findRange(ringRanges, 30)).toBeUndefined();
+  });
+
+  it('puts a weight in the gap between printed ranges into the nearer range', () => {
+    const round = c.settingChart.sizeRanges.filter((r) => r.rateGroup === 'DIAMOND_ROUND'); // 0–0.0155, 0.016–0.069, 0.07–…
+    expect(findRange(round, 0.0159)?.wtFrom).toBe(0.016);
+    expect(findRange(round, 0.0156)?.wtTo).toBe(0.0155);
+    expect(findRange(round, 0.0698)?.wtFrom).toBe(0.07);
   });
 
   it('maps ERP commodities to chart commodities', () => {

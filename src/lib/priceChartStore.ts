@@ -29,6 +29,7 @@ export const priceChartSchema = z
     metal: z.string().min(1),
     currency: z.string().min(1),
     effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    defaultFor: z.array(z.number().int().positive()).optional(),
     source: z.object({ file: z.string(), sheet: z.string(), importedAt: z.string() }),
     metalChart: z.object({
       goldLoss: z.array(z.object({ style: z.string().min(1), styleZh: nameZh, karats: z.string(), pct: z.number().nullable() })),
@@ -41,6 +42,7 @@ export const priceChartSchema = z
           variant: z.string().nullable(),
           wtFrom: weight,
           wtTo: weight.nullable(),
+          margin: z.number().positive().nullable().optional(),
           note: z.string().nullable(),
         }),
       ),
@@ -154,7 +156,18 @@ export interface PriceChartSummary {
   name: string;
   factoryLabel: string;
   effectiveDate: string;
+  defaultFor: number[];
   updatedAt: string;
+}
+
+// The chart a company's reports use when none is picked: one listing the
+// company in defaultFor, else the newest chart that lists no companies.
+export function defaultChartFor<T extends Pick<PriceChartSummary, 'code' | 'defaultFor'>>(charts: T[], companyId: number | null): T | undefined {
+  return (
+    (companyId != null ? charts.find((c) => c.defaultFor.includes(companyId)) : undefined) ??
+    charts.find((c) => c.defaultFor.length === 0) ??
+    charts[0]
+  );
 }
 
 export async function listPriceCharts(): Promise<PriceChartSummary[]> {
@@ -168,7 +181,14 @@ export async function listPriceCharts(): Promise<PriceChartSummary[]> {
     files.map(async (f) => {
       const full = path.join(CHART_DIR, f);
       const [chart, stat] = await Promise.all([fs.readFile(full, 'utf8').then((t) => JSON.parse(t) as PriceChart), fs.stat(full)]);
-      return { code: chart.code, name: chart.name, factoryLabel: chart.factoryLabel, effectiveDate: chart.effectiveDate, updatedAt: stat.mtime.toISOString() };
+      return {
+        code: chart.code,
+        name: chart.name,
+        factoryLabel: chart.factoryLabel,
+        effectiveDate: chart.effectiveDate,
+        defaultFor: chart.defaultFor ?? [],
+        updatedAt: stat.mtime.toISOString(),
+      };
     }),
   );
   return charts.sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate));
