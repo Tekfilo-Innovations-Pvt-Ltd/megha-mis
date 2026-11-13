@@ -70,6 +70,25 @@ export const normMm = (s: string | null | undefined) => {
   return u ? u.replace(/\d+(?:\.\d+)?/g, (n) => String(Number(n))) : null;
 };
 
+// One spelling per size, so rows that mean the same size agree: "4X4" → "4"
+// (a trillion / cushion written both ways), "8X10" → "10X8" (length first).
+// Three-dimension measurements (length × width × depth) are kept as written.
+export const canonicalMm = (mm: string | null) => {
+  if (!mm || !/^\d+(?:\.\d+)?(X\d+(?:\.\d+)?)*$/.test(mm)) return mm;
+  const dims = mm.split('X').map(Number);
+  if (dims.every((d) => d === dims[0])) return String(dims[0]);
+  return dims.length === 2 ? dims.sort((a, b) => b - a).join('X') : mm;
+};
+
+// A lot's size: the one given on more than half of its rows. The customer's
+// sheet repeats the lot on every stone row, sometimes with a typo or an odd
+// stone (TZOV90704: 9X7 ×118, 8X6 ×2); mix lots measured stone by stone get none.
+export function majoritySize(counts: Map<string, number>): string | null {
+  const total = Array.from(counts.values()).reduce((a, b) => a + b, 0);
+  for (const [size, n] of Array.from(counts)) if (n * 2 > total) return size;
+  return null;
+}
+
 const headerKey = (h: string) => h.toUpperCase().replace(/[^A-Z]/g, '');
 
 function findHeader(ws: ExcelJS.Worksheet, required: string[]): { row: number; col: Map<string, number> } | null {
@@ -93,7 +112,7 @@ export async function parseCorrectionWorkbook(data: ArrayBuffer): Promise<Pick<S
   }
 
   const stoneRows: StoneRowCorrection[] = [];
-  const lotValues = new Map<string, { shapes: Set<string>; sizes: Set<string> }>();
+  const lotValues = new Map<string, { shapes: Set<string>; sizes: Map<string, number> }>();
 
   for (const ws of wb.worksheets) {
     const stone = findHeader(ws, ['INVNO', 'JOBNO', 'LOTCODE', 'SHAPE', 'MM']);
@@ -125,11 +144,11 @@ export async function parseCorrectionWorkbook(data: ArrayBuffer): Promise<Pick<S
         const row = ws.getRow(r);
         const lotCode = up(row.getCell(lot.col.get('LOT')!).value);
         if (!lotCode) continue;
-        const e = lotValues.get(lotCode) ?? { shapes: new Set(), sizes: new Set() };
+        const e = lotValues.get(lotCode) ?? { shapes: new Set(), sizes: new Map() };
         const shape = normShape(text(row.getCell(lot.col.get('SHAPE')!).value));
-        const size = normMm(text(row.getCell(lot.col.get('SIZE')!).value));
+        const size = canonicalMm(normMm(text(row.getCell(lot.col.get('SIZE')!).value)));
         if (shape) e.shapes.add(shape);
-        if (size) e.sizes.add(size);
+        if (size) e.sizes.set(size, (e.sizes.get(size) ?? 0) + 1);
         lotValues.set(lotCode, e);
       }
     }
@@ -138,7 +157,7 @@ export async function parseCorrectionWorkbook(data: ArrayBuffer): Promise<Pick<S
   const lots: LotCorrection[] = Array.from(lotValues, ([lotCode, e]) => ({
     lotCode,
     shape: e.shapes.size === 1 ? Array.from(e.shapes)[0] : null,
-    mmSize: e.sizes.size === 1 ? Array.from(e.sizes)[0] : null,
+    mmSize: majoritySize(e.sizes),
   })).filter((l) => l.shape || l.mmSize);
 
   if (stoneRows.length === 0 && lots.length === 0) {

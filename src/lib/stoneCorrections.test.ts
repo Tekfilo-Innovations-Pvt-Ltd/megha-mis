@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
-import { applyStoneCorrections, normMm, normShape, parseCorrectionWorkbook } from '@/lib/stoneCorrections';
+import { applyStoneCorrections, canonicalMm, majoritySize, normMm, normShape, parseCorrectionWorkbook } from '@/lib/stoneCorrections';
 import type { LineInput, StoneInput } from '@/lib/labourComparison';
 
 const stone = (s: Partial<StoneInput>): StoneInput => ({
@@ -64,5 +64,22 @@ describe('customer stone corrections', () => {
     const wb = new ExcelJS.Workbook();
     wb.addWorksheet('x').addRow(['a', 'b']);
     await expect(parseCorrectionWorkbook((await wb.xlsx.writeBuffer()) as ArrayBuffer)).rejects.toThrow('No corrections found');
+  });
+});
+
+describe('lot sizes from the Color Stones sheet', () => {
+  it('writes the same size one way', () => {
+    expect(canonicalMm('4X4')).toBe('4');
+    expect(canonicalMm('8X10')).toBe('10X8');
+    expect(canonicalMm('10X8')).toBe('10X8');
+    expect(canonicalMm('9.82X7.8X5.03')).toBe('9.82X7.8X5.03');
+    expect(canonicalMm('7.5C5.5')).toBe('7.5C5.5'); // typos are left alone
+  });
+
+  it("takes the size given on more than half of a lot's rows", () => {
+    expect(majoritySize(new Map([['9X7', 118], ['8X6', 2]]))).toBe('9X7');
+    expect(majoritySize(new Map([['4', 3]]))).toBe('4');
+    expect(majoritySize(new Map([['10X8', 5], ['11X9', 5]]))).toBeNull();
+    expect(majoritySize(new Map())).toBeNull();
   });
 });
