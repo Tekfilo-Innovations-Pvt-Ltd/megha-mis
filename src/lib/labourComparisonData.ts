@@ -224,7 +224,13 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
     // such a row; only when it has none is the setting_amount on the stone
     // components taken. Some AAA lines (May–Sep 2026) carry both, and the ERP line
     // total adds both — there the component amount is left out and noted.
-    const lineStones = stonesBy.get(r.inv_det_id) ?? [];
+    // Empty stone components (nothing consumed, nothing billed — AAA has ~1,600)
+    // are left out: they'd only show as unpriced "No pcs" stones and mark the
+    // line partly compared. A component with carats or a setting amount but no
+    // pieces stays, as a real gap.
+    const lineStones = (stonesBy.get(r.inv_det_id) ?? []).filter(
+      (s) => (s.qty1 ?? 0) !== 0 || (s.qty2 ?? 0) !== 0 || (s.setting_amount ?? 0) !== 0,
+    );
     const lineLabour = labourBy.get(r.inv_det_id) ?? [];
     const settingInLabour = lineLabour.some((l) => l.amount !== 0 && SETTING_ROW.test(l.process.trim()));
     const componentSettingNotCounted = settingInLabour ? lineStones.reduce((sum, s) => sum + (s.setting_amount ?? 0), 0) : 0;
