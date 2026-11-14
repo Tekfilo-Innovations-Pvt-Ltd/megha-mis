@@ -35,8 +35,17 @@ export interface ChartCalc {
 }
 
 // 2–4 decimals: rates like 0.21 or 0.3375 read as written in the chart.
-const n = (v: number | null | undefined, min = 2, max = 4) =>
-  v == null ? '—' : v.toLocaleString('en-IN', { minimumFractionDigits: min, maximumFractionDigits: max });
+// One formatter per decimals setting: toLocaleString builds a new Intl
+// formatter on every call, and this runs for every row of every line — it was
+// 22 of the 24 s of building RT's lot detail (9,000 lines).
+const formatters = new Map<string, Intl.NumberFormat>();
+const n = (v: number | null | undefined, min = 2, max = 4) => {
+  if (v == null) return '—';
+  const key = `${min}|${max}`;
+  let f = formatters.get(key);
+  if (!f) formatters.set(key, (f = new Intl.NumberFormat('en-IN', { minimumFractionDigits: min, maximumFractionDigits: max })));
+  return f.format(v);
+};
 const pcs = (v: number) => `${n(v, 0, 0)} pcs`;
 const r4 = (v: number) => Math.round(v * 10000) / 10000;
 

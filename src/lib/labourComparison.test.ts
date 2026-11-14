@@ -76,9 +76,22 @@ describe('compareLine', () => {
     expect(r.metal.charges.find((c) => c.labourClass === 'COVER_BACK')).toMatchObject({ code: 'J_BACK', chartRate: 1.13, chartAmount: 5.65 });
   });
 
-  it('leaves plating and laser stamping "not in chart" where the range has no rate for them', () => {
+  it('prices plating on the Rhodium column and laser stamping at the stamping rate', () => {
     const labour = [...ringLine.labour, { process: 'Plating 电金', amount: 4 }, { process: 'Laser stampping镭射字印', amount: 2.5 }];
     const r = compareLine({ ...ringLine, labour }, chart, options);
+    // ring 0–3 g, 5 pcs: rhodium 1.14, laser stamping 0.50 per pc
+    expect(r.metal.charges.map((c) => [c.labourClass, c.code, c.chartAmount])).toEqual([
+      ['BASIC', 'BASIC_5_UP', 18.55],
+      ['PLATING', 'RHODIUM', 5.7],
+      ['LASER_STAMPING', 'LASER_STAMPING', 2.5],
+    ]);
+    expect(r.notInChart).toEqual([{ process: 'Alloy', amount: 3.17 }]);
+  });
+
+  it('leaves plating and laser stamping "not in chart" where the range has no rate for them', () => {
+    const bare: PriceChart = { ...chart, metalChart: { ...chart.metalChart, rates: chart.metalChart.rates.filter((x) => !['RHODIUM', 'PLATING', 'LASER_STAMPING'].includes(x.chargeType)) } };
+    const labour = [...ringLine.labour, { process: 'Plating 电金', amount: 4 }, { process: 'Laser stampping镭射字印', amount: 2.5 }];
+    const r = compareLine({ ...ringLine, labour }, bare, options);
     expect(r.metal.charges.map((c) => c.labourClass)).toEqual(['BASIC']);
     expect(r.notInChart).toEqual([{ process: 'Alloy', amount: 3.17 }, { process: 'Plating 电金', amount: 4 }, { process: 'Laser stampping镭射字印', amount: 2.5 }]);
     expect(r.partial).toBe(false);
@@ -198,7 +211,7 @@ describe('compareLine', () => {
         stones: [
           stone({ componentId: 1, carats: 0.12, pieces: 1, settingType: 'BAZEL', settingAmount: 0.7 }), // Bezel 0.65
           stone({ componentId: 2, carats: 0.5, pieces: 1, settingType: 'CHANNEL' }), // no Channel rate above 0.199 ct
-          stone({ componentId: 3, shape: 'PRINCESS' }),
+          stone({ componentId: 3, shape: 'NATTS' }),
           stone({ componentId: 4, commodity: 'CUBIC ZIRCONIA', commodityGroup: 'ZIRCON' }),
           stone({ componentId: 5, settingType: 'BAR SETTING' }),
         ],

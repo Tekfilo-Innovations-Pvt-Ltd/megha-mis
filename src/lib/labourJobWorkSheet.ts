@@ -178,20 +178,37 @@ export function addJobWorkSheet(wb: ExcelJS.Workbook, groups: LotGroup[]) {
   merge(ws, `${C.csMaster}${total}`, `${PAIRS[C.csMaster]}${total}`);
 
   // ---- styling ----
+  // One shared style object per kind of cell. Giving each of the millions of
+  // cells its own font / border / alignment objects took ~3 GB and minutes for
+  // a large company (RT, 9,000 lines). Shared objects must never be changed
+  // through a cell, so shading picks its own preset instead of setting .fill.
+  const shadedCells = new Set(shaded);
+  const presets = new Map<string, Partial<ExcelJS.Style>>();
+  const preset = (head: boolean, bold: boolean, horizontal: 'center' | 'right' | 'left', numFmt: string | undefined, fill: 'head' | 'missing' | null) => {
+    const key = `${head}|${bold}|${horizontal}|${numFmt ?? ''}|${fill ?? ''}`;
+    let s = presets.get(key);
+    if (!s) {
+      s = {
+        font: { ...FONT, bold },
+        border: BORDERS,
+        alignment: { horizontal, vertical: 'middle', wrapText: true },
+        ...(numFmt ? { numFmt } : {}),
+        ...(fill === 'head' ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9F5F5' } } } : fill === 'missing' ? { fill: MISSING_FILL } : {}),
+      };
+      presets.set(key, s);
+    }
+    return s;
+  };
+  const lastCol = colIndex(LAST);
   for (let r = 1; r <= total; r++) {
-    for (let cIdx = 1; cIdx <= colIndex(LAST); cIdx++) {
+    const head = r <= 2;
+    for (let cIdx = 1; cIdx <= lastCol; cIdx++) {
       const col = colLetters(cIdx);
-      const cell = ws.getCell(`${col}${r}`);
-      const head = r <= 2;
-      cell.font = { ...FONT, bold: head || r === total };
-      cell.border = BORDERS;
-      cell.alignment = { horizontal: head || typeof cell.value !== 'number' ? 'center' : 'right', vertical: 'middle', wrapText: true };
-      if (head) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9F5F5' } };
-      else if (FORMATS[col]) cell.numFmt = FORMATS[col]!;
+      const address = `${col}${r}`;
+      const cell = ws.getCell(address);
+      const horizontal = head || (r === total && cIdx === 1) ? 'center' : r < total && col === C.remarks ? 'left' : typeof cell.value === 'number' ? 'right' : 'center';
+      cell.style = preset(head, head || r === total, horizontal, head ? undefined : FORMATS[col], head ? 'head' : shadedCells.has(address) ? 'missing' : null) as ExcelJS.Style;
     }
   }
-  ws.getCell(`A${total}`).alignment = { horizontal: 'center', vertical: 'middle' };
-  for (let r = 3; r < total; r++) ws.getCell(`${C.remarks}${r}`).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
-  for (const address of shaded) ws.getCell(address).fill = MISSING_FILL;
   return ws;
 }

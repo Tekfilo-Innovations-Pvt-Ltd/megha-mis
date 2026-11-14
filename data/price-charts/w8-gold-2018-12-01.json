@@ -372,6 +372,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "RING-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "RING-2",
         "chargeType": "BASIC_UNDER_5",
         "rate": 4.8405,
@@ -411,6 +417,12 @@
         "rangeId": "RING-2",
         "chargeType": "TWO_TONE",
         "rate": 2.64,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -456,6 +468,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "RING-3",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "RING-4",
         "chargeType": "BASIC_UNDER_5",
         "rate": 8.6415,
@@ -495,6 +513,12 @@
         "rangeId": "RING-4",
         "chargeType": "TWO_TONE",
         "rate": 4.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "RING-4",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -540,6 +564,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "RING-5",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "EARRINGS-1",
         "chargeType": "BASIC_UNDER_5",
         "rate": 6.2055,
@@ -579,6 +609,12 @@
         "rangeId": "EARRINGS-1",
         "chargeType": "TWO_TONE",
         "rate": 2.88,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -624,6 +660,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "EARRINGS-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "EARRINGS-3",
         "chargeType": "BASIC_UNDER_5",
         "rate": 7.686,
@@ -663,6 +705,12 @@
         "rangeId": "EARRINGS-3",
         "chargeType": "TWO_TONE",
         "rate": 4.08,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "EARRINGS-3",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -708,6 +756,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "EARRINGS-4",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "EARRINGS-5",
         "chargeType": "BASIC_UNDER_5",
         "rate": 16.191,
@@ -750,6 +804,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "EARRINGS-5",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "STUD-BUTTERFLY_BACK-1",
         "chargeType": "BASIC_UNDER_5",
         "rate": 4.41,
@@ -774,6 +834,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "STUD-BUTTERFLY_BACK-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "STUD-LEVER_BACK-1",
         "chargeType": "BASIC_UNDER_5",
         "rate": 6.615,
@@ -795,6 +861,12 @@
         "rangeId": "STUD-LEVER_BACK-1",
         "chargeType": "TWO_TONE",
         "rate": 3.36,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "STUD-LEVER_BACK-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -840,6 +912,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "PENDANT-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "PENDANT-2",
         "chargeType": "BASIC_UNDER_5",
         "rate": 4.6095,
@@ -879,6 +957,12 @@
         "rangeId": "PENDANT-2",
         "chargeType": "TWO_TONE",
         "rate": 2.64,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -924,6 +1008,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "PENDANT-3",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "PENDANT-4",
         "chargeType": "BASIC_UNDER_5",
         "rate": 8.2215,
@@ -963,6 +1053,12 @@
         "rangeId": "PENDANT-4",
         "chargeType": "TWO_TONE",
         "rate": 4.8,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT-4",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -1008,6 +1104,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "PENDANT-5",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "PENDANT_WITH_CHAIN-1",
         "chargeType": "BASIC_UNDER_5",
         "rate": 10.815,
@@ -1047,6 +1149,12 @@
         "rangeId": "PENDANT_WITH_CHAIN-1",
         "chargeType": "TWO_TONE",
         "rate": 5,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -1092,6 +1200,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "PENDANT_WITH_CHAIN-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "PENDANT_WITH_CHAIN-3",
         "chargeType": "BASIC_UNDER_5",
         "rate": 37.17,
@@ -1131,6 +1245,12 @@
         "rangeId": "PENDANT_WITH_CHAIN-3",
         "chargeType": "TWO_TONE",
         "rate": 12,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "PENDANT_WITH_CHAIN-3",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -1176,6 +1296,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "PENDANT_WITH_CHAIN-4",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "BRACELET-1",
         "chargeType": "BASIC_UNDER_5",
         "rate": 13.125,
@@ -1218,6 +1344,12 @@
         "unit": "per pc"
       },
       {
+        "rangeId": "BRACELET-1",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
+        "unit": "per pc"
+      },
+      {
         "rangeId": "BRACELET-2",
         "chargeType": "BASIC_UNDER_5",
         "rate": 18.039,
@@ -1251,6 +1383,12 @@
         "rangeId": "BRACELET-2",
         "chargeType": "TWO_TONE",
         "rate": 7.2,
+        "unit": "per pc"
+      },
+      {
+        "rangeId": "BRACELET-2",
+        "chargeType": "LASER_STAMPING",
+        "rate": 0.5,
         "unit": "per pc"
       },
       {
@@ -1608,7 +1746,15 @@
           "PEAR",
           "CUSHION",
           "OCTOGON",
-          "SQUARE"
+          "SQUARE",
+          "PRINCESS",
+          "PRINCESS CUT",
+          "OVAL",
+          "EM CUT",
+          "SQ EM CUT",
+          "HEART",
+          "RADIANT",
+          "ASSCHER"
         ],
         "note": null
       },

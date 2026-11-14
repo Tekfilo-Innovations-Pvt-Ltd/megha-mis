@@ -91,12 +91,14 @@ export const ADD_ONS: LabourClass[] = ['COVER_BACK', 'J_BACK', 'SOLDERING', 'RHO
 // Cover back (网底) was priced on the chart's J-back column before the chart had
 // its own Cover back charge (added for BANGLE from the Labour Bangle sheet,
 // 2026-11-13); ranges without a Cover back rate still use J-back.
-// Rhodium is priced on the Plating column where a range has no Rhodium rate:
-// Wilson's bangle sheet bills rhodium plating as "Plating", AAA as "rhodium".
-// (Not the reverse — plating on other product types stays "not in chart".)
+// Rhodium plating is billed as "Plating 电金" (Wilson, Golden Master, Nick) or
+// "rhodium" (AAA); each is priced on the other's column where a range has no
+// rate of its own. The user's rule (2026-11-14): plating uses the plain Rhodium
+// rate (not the bangle sheet's × 1.35).
 const CHART_CHARGES: Partial<Record<LabourClass, string[]>> = {
   COVER_BACK: ['COVER_BACK', 'J_BACK'],
   RHODIUM: ['RHODIUM', 'PLATING'],
+  PLATING: ['PLATING', 'RHODIUM'],
 };
 
 // Non-precious metal parts (spring wire, steel posts) — not what a gold
