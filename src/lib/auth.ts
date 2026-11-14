@@ -3,7 +3,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import erp from '@/lib/erp';
 import { verifyErpPassword } from '@/lib/erpPassword';
 import { SESSION_COOKIE } from '@/lib/sessionCookie';
-import { getUserCompanies } from '@/lib/company';
+import { getCompaniesWithInvoices, getUserCompanies } from '@/lib/company';
+import { sharedLoginFor, verifySharedPassword } from '@/lib/sharedLogin';
 
 // Signs in against the ERP's own users (tbl_user), with the ERP's password
 // hashing. MIS is read-only, so nothing is written back (no login count /
@@ -22,6 +23,27 @@ export const authOptions: NextAuthOptions = {
         }
 
         const login = credentials.username.trim();
+
+        // The common MIS-only viewer login (src/lib/sharedLogin.ts): checked
+        // first, view only, every company with factory invoices.
+        const shared = sharedLoginFor(login);
+        if (shared) {
+          if (!verifySharedPassword(credentials.password, shared.passwordHash)) {
+            throw new Error('Invalid credentials');
+          }
+          const companies = await getCompaniesWithInvoices();
+          if (companies.length === 0) throw new Error('No company access');
+          return {
+            companies,
+            companyId: companies[0].id,
+            id: `shared:${shared.username}`,
+            email: null,
+            name: shared.name,
+            roles: [], // no role = no upload / settings / Ask MIS permission
+            permissions: [],
+          };
+        }
+
         const user = await erp.tbl_user.findFirst({
           where: {
             OR: [{ username: login }, { email: { equals: login, mode: 'insensitive' } }],

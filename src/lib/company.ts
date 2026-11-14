@@ -34,6 +34,19 @@ export async function getUserCompanies(userId: number, isSuperadmin: boolean): P
   return ids.filter((id) => names.has(id)).map((id) => ({ id, name: names.get(id)! }));
 }
 
+// Companies that have factory invoices — what the shared MIS viewer login
+// (src/lib/sharedLogin.ts) may switch between. Most invoices first.
+export async function getCompaniesWithInvoices(): Promise<CompanyOption[]> {
+  const rows = await erp.$queryRaw<{ id: number; name: string }[]>`
+    SELECT c.company_id AS id, c.company_name AS name
+      FROM tbl_company c
+      JOIN tbl_factory_invoice_main m ON m.company_id = c.company_id AND m.is_deleted = 0
+     WHERE c.is_deleted = 0
+     GROUP BY 1, 2
+     ORDER BY count(*) DESC`;
+  return rows;
+}
+
 // The company the signed-in user is currently working in (switched via the
 // sidebar). Every company-scoped query must filter by this.
 export async function getSessionCompanyId(): Promise<number | null> {

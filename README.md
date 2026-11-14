@@ -23,6 +23,17 @@ After ERP schema changes: `npm run erp:pull` (introspect + fix-up + generate). I
 
 Check the connection and the read-only guard: `npx tsx scripts/check-erp.ts`.
 
+### Common viewer login
+
+Besides ERP users, MIS can have one shared, MIS-only login for people without an ERP account. It is **view only** (no chart / stone-correction uploads, AI settings or Ask MIS) and sees every company that has factory invoices. Set or change it — only a hash of the password goes into `.env`:
+
+```bash
+npx tsx scripts/set-shared-login.ts mis-viewer            # generates and prints a password once
+npx tsx scripts/set-shared-login.ts mis-viewer 'MyPass…'  # or give your own (10+ characters)
+```
+
+Restart the server afterwards. Remove the `MIS_SHARED_*` lines from `.env` to switch it off.
+
 ### Running locally on a low-memory PC
 
 `npm run dev` keeps the compiler in memory (~1.4 GB once the Labour vs Chart report is open). To just *use* the app, run the production build instead (~50 MB idle, ~380 MB after the report):
