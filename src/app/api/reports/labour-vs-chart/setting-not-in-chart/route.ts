@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     from: from ?? undefined,
     to: to ?? undefined,
     productType: p.get('productType')?.trim() || undefined,
+      factoryId: Number(p.get('factory')) || undefined,
     jobCategory: p.get('jobCategory')?.trim() || undefined,
     sku: p.get('sku')?.trim() || undefined,
     skuExact: p.get('skuExact') === '1',

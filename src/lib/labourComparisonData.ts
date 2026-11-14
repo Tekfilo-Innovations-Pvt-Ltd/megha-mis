@@ -13,6 +13,7 @@ export interface LineFilter {
   from?: string; // yyyy-mm-dd, invoice date
   to?: string;
   productType?: string; // ERP product type name (case-insensitive)
+  factoryId?: number; // tbl_factory_invoice_main.factory_id
   jobCategory?: string; // tbl_jewellery.job_category (case-insensitive), e.g. Normal / Repair
   sku?: string; // part of the SKU number
   skuExact?: boolean; // sku is the whole SKU number (case-insensitive)
@@ -87,6 +88,7 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
   const where = [`m.company_id = ${param(filter.companyId)}`, 'm.is_deleted = 0', 'd.is_deleted = 0'];
   if (filter.from) where.push(`m.inv_dt >= ${param(filter.from)}::date`);
   if (filter.to) where.push(`m.inv_dt <= ${param(filter.to)}::date`);
+  if (filter.factoryId) where.push(`m.factory_id = ${param(filter.factoryId)}`);
   if (filter.productType) where.push(`upper(trim(pt.product_type_name)) = ${param(filter.productType.trim().toUpperCase())}`);
   if (filter.jobCategory) where.push(`upper(trim(j.job_category)) = ${param(filter.jobCategory.trim().toUpperCase())}`);
   if (filter.sku) {
@@ -296,6 +298,17 @@ export async function listLineJobCategories(companyId: number): Promise<string[]
        AND trim(coalesce(j.job_category, '')) <> ''
      ORDER BY 1`;
   return rows.map((r) => r.job_category);
+}
+
+// Factories the company has factory invoices from — the report's filter options.
+export async function listInvoiceFactories(companyId: number): Promise<{ id: number; name: string }[]> {
+  const rows = await erp.$queryRaw<{ id: number; name: string }[]>`
+    SELECT DISTINCT f.factory_id AS id, trim(f.factory_name) AS name
+      FROM tbl_factory_invoice_main m
+      JOIN tbl_factory f ON f.factory_id = m.factory_id
+     WHERE m.company_id = ${companyId} AND m.is_deleted = 0
+     ORDER BY 2`;
+  return rows;
 }
 
 // Product types used on the company's invoice lines — the report's filter options.

@@ -112,8 +112,9 @@ describe('buildLabourBreakup', () => {
     const plain = buildLabourBreakup({ ...aaaLine, labour: [{ process: 'Setting', amount: 50 }] }, c, chart);
     expect(plain.find((r) => r.process === 'Setting')!.chartAmount).toBeCloseTo(chartOf(1)! + chartOf(2)!, 4);
     const none = buildLabourBreakup({ ...aaaLine, labour: [{ process: 'CPF', amount: 22.8 }] }, c, chart);
-    expect(none.find((r) => r.process === 'Stone setting')).toMatchObject({ invoiceAmount: null });
-    expect(none.find((r) => r.process === 'Stone setting')!.chartAmount).toBeCloseTo(chartOf(1)! + chartOf(2)!, 4);
+    // no setting invoiced: a chart-only row per section, invoice 0
+    expect(none.find((r) => r.process === 'Side Stone Setting')).toMatchObject({ invoiceAmount: 0, chartAmount: chartOf(1) });
+    expect(none.find((r) => r.process === 'Center Stone Setting')).toMatchObject({ invoiceAmount: 0, chartAmount: chartOf(2) });
   });
 
   it('puts basic, rhodium and setting chart on a combined row only — nothing counted twice', () => {
@@ -145,6 +146,7 @@ describe('jobWorkBlock', () => {
       { process: 'rhodium', invoiceAmount: 24, chartAmount: 13.68 },
       { process: 'Side Stone Setting', invoiceAmount: 3692.4, chartAmount: 80.64 },
       { process: 'Findings', invoiceAmount: 5, chartAmount: null },
+      { process: 'Center Stone Setting', invoiceAmount: 10, chartAmount: null }, // set on the stones (buildLabourBreakup)
     ],
     [
       row({ stone: 'COLOR', commodity: 'TANZANITE', item: 'TRILLION', pcs: 12, wt: 9.78 }), // no chart rate
@@ -157,10 +159,10 @@ describe('jobWorkBlock', () => {
   it('splits stones into colour and diamond and sizes the block by its longest section', () => {
     expect(b.colour.map((s) => s.commodity)).toEqual(['TANZANITE']);
     expect(b.diamonds.map((s) => s.commodity)).toEqual(['DIAMOND']);
-    expect(b.height).toBe(4);
+    expect(b.height).toBe(5);
   });
 
-  it('totals the labour table plus setting on the stones, and the chart once', () => {
+  it('totals the labour breakup, setting on the stones included', () => {
     expect(b.invoiceTotal).toBe(3802.2); // 70.8 + 24 + 3692.4 + 5 + 10 on the stones
     expect(b.chartTotal).toBe(138.84); // 44.52 + 13.68 + 80.64
     expect(b.difference).toBe(3663.36);
@@ -169,7 +171,7 @@ describe('jobWorkBlock', () => {
 
   it('marks what is missing and says so in the remarks', () => {
     expect(b.incomplete).toBe(true);
-    expect(b.remarks).toBe('No chart amount: TANZANITE TRILLION, Findings');
+    expect(b.remarks).toBe('No chart amount: TANZANITE TRILLION, Findings, Center Stone Setting');
   });
 
   it('says when setting on the stone components was left out', () => {
@@ -208,8 +210,8 @@ describe('stone section amounts', () => {
     expect(stoneSetting(onStone)).toEqual({ invoiceRate: 0.5, invoiceAmount: 5, chartRate: 0.4, chartAmount: 4 });
   });
 
-  it('counts a stone set on the stone in the totals once, from the stone section', () => {
-    const b = jobWorkBlock(group([{ process: 'CPF', invoiceAmount: 70.8, chartAmount: 44.52 }], [onStone], 5));
+  it('counts a stone set on the stone in the totals once, from its breakup row', () => {
+    const b = jobWorkBlock(group([{ process: 'CPF', invoiceAmount: 70.8, chartAmount: 44.52 }, { process: 'Side Stone Setting', invoiceAmount: 5, chartAmount: 4 }], [onStone], 5));
     expect(b.invoiceTotal).toBe(75.8);
     expect(b.chartTotal).toBe(48.52);
     expect(missingSide(row({ settingOnStone: 0, chartAmount: null }))).toBe('chart');

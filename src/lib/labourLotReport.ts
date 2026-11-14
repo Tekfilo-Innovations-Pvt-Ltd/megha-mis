@@ -176,12 +176,31 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
   // Stone setting chart → the setting process for the stone's section.
   const settingRows = rows.filter((r) => r.cls === 'SETTING');
   const sectionOf = (rateGroup: string | null) => chart.settingChart.rateGroups.find((g) => g.code === rateGroup)?.section ?? null;
-  let unbilledSetting = 0;
-  const unbilledParts: (ChartCalcPart | null)[] = [];
+  // Stone setting that isn't in a labour row — recorded on the stone components
+  // (AAA, e.g. bag B804664) or not invoiced at all — gets a "Side Stone Setting"
+  // / "Center Stone Setting" row by the stone's chart section, so the chart
+  // total's breakup is visible in the labour breakup. Its invoice amount is the
+  // setting recorded on those stones, 0 when nothing was invoiced.
+  const sectionRows = new Map<string, { invoice: number; chart: number | null; parts: (ChartCalcPart | null)[] }>();
+  const sectionRow = (rateGroup: string | null) => {
+    const section = sectionOf(rateGroup);
+    const name = section === 'SIDE' ? 'Side Stone Setting' : section === 'CENTER' ? 'Center Stone Setting' : 'Stone setting';
+    let x = sectionRows.get(name);
+    if (!x) sectionRows.set(name, (x = { invoice: 0, chart: null, parts: [] }));
+    return x;
+  };
   for (const st of c.setting.stones) {
-    // Setting recorded on the stone itself stays with the stone in the stone section.
-    if (st.chartAmount == null || st.invoicedOnStone !== 0) continue;
     if (inCombined.has('SETTING')) continue; // in the combined row's chart amount
+    if (st.invoicedOnStone !== 0) {
+      const x = sectionRow(st.rateGroup);
+      x.invoice += st.invoicedOnStone;
+      if (st.chartAmount != null) {
+        x.chart = r4((x.chart ?? 0) + st.chartAmount);
+        x.parts.push(stonePart(st, chart));
+      }
+      continue;
+    }
+    if (st.chartAmount == null) continue;
     const section = sectionOf(st.rateGroup);
     const target =
       settingRows.find((r) => settingKind(r.process) === section) ??
@@ -191,13 +210,18 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
       target.chart = r4((target.chart ?? 0) + st.chartAmount);
       target.parts.push(stonePart(st, chart));
     } else {
-      unbilledSetting += st.chartAmount;
-      unbilledParts.push(stonePart(st, chart));
+      const x = sectionRow(st.rateGroup);
+      x.chart = r4((x.chart ?? 0) + st.chartAmount);
+      x.parts.push(stonePart(st, chart));
     }
   }
-  if (unbilledSetting > 0) {
-    const total = r4(unbilledSetting);
-    extra.push({ process: 'Stone setting', invoiceAmount: null, chartAmount: total, chartCalc: chartCalc(calcTitle('Stone setting'), unbilledParts, total) });
+  for (const [name, x] of Array.from(sectionRows)) {
+    extra.push({
+      process: name,
+      invoiceAmount: r4(x.invoice),
+      chartAmount: x.chart,
+      chartCalc: x.chart != null ? chartCalc(calcTitle(name), x.parts, x.chart) : null,
+    });
   }
 
   const ranges = new Map(c.modelMaking.map((m) => [m.process, m]));

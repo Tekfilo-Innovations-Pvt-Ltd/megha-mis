@@ -7,7 +7,7 @@ import {
   type LineInput,
   type LineStatus,
 } from '@/lib/labourComparison';
-import { listLineJobCategories, listLineProductTypes, loadComparisonLines, type LineFilter, type LineInfo } from '@/lib/labourComparisonData';
+import { listInvoiceFactories, listLineJobCategories, listLineProductTypes, loadComparisonLines, type LineFilter, type LineInfo } from '@/lib/labourComparisonData';
 import { buildLotGroup } from '@/lib/labourLotReport';
 import type { PriceChart } from '@/lib/priceChart';
 
@@ -234,10 +234,11 @@ export async function buildLabourReport(
   options: ComparisonOptions,
   view: View,
 ) {
-  const [{ info, lines }, productTypes, jobCategories] = await Promise.all([
+  const [{ info, lines }, productTypes, jobCategories, factories] = await Promise.all([
     loadComparisonLines(filter),
     listLineProductTypes(filter.companyId),
     listLineJobCategories(filter.companyId),
+    listInvoiceFactories(filter.companyId),
   ]);
   const rows = lines.map((l) => toRow(info.get(l.invDetId)!, compareLine(l, chart, options), l));
 
@@ -293,6 +294,7 @@ export async function buildLabourReport(
     summary,
     productTypes,
     jobCategories,
+    factories,
     group: view.group ?? 'line',
     rows: skus ? [] : page(sorted),
     skus: skus ? page(skus) : null,

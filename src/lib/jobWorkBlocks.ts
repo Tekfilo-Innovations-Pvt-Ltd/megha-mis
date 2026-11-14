@@ -8,12 +8,13 @@ import { chartCalc, sumCalcs, type ChartCalc } from '@/lib/chartCalc';
 //
 // The labour breakup is the invoice's own labour table (process names as
 // invoiced), each row with its chart amount — see buildLabourBreakup. A
-// stone's setting shows in one place only: in the labour row it was invoiced
-// in ("Side Stone Setting", "Setting"…), or — when the line has no setting
-// labour row and the amount is on the stone components — in the stone
-// section (labourComparisonData decides which). So:
-//   chart total   = breakup chart amounts + chart of stones set on the stone
-//   invoice total = breakup invoice amounts + setting recorded on the stones
+// stone's setting is in the labour row it was invoiced in ("Side Stone
+// Setting", "Setting"…); setting recorded on the stone components, or not
+// invoiced at all, gets a "Side / Center Stone Setting" row of its own (see
+// buildLabourBreakup). The stone section still shows a stone's own setting
+// amounts per lot, as detail. So both totals are the breakup's:
+//   chart total   = breakup chart amounts
+//   invoice total = breakup invoice amounts (labour rows + setting on stones)
 
 // The setting amounts a stone shows in the stone section: its own when the
 // setting is recorded on the stone, none when it's in a labour row.
@@ -110,8 +111,8 @@ export function jobWorkBlock(group: LotGroup): JobWorkBlock {
   const colour = stones.filter((r) => r.stone === 'COLOR');
   const diamonds = stones.filter((r) => r.stone !== 'COLOR');
   const labour = group.labour;
-  const invoiceTotal = r2(sum(labour.map((x) => x.invoiceAmount)) + group.stoneSettingInvoiced);
-  const chartTotal = r2(sum(labour.map((x) => x.chartAmount)) + sum(stones.map((s) => stoneSetting(s).chartAmount)));
+  const invoiceTotal = r2(sum(labour.map((x) => x.invoiceAmount)));
+  const chartTotal = r2(sum(labour.map((x) => x.chartAmount)));
   return {
     group,
     colour,
@@ -128,7 +129,6 @@ export function jobWorkBlock(group: LotGroup): JobWorkBlock {
       'Total chart labour',
       [
         ...labour.map((x) => withPrefix(x.process, x.chartCalc)),
-        ...stones.filter((s) => stoneSetting(s).chartAmount != null).map((s) => withPrefix('Setting on the stone', s.chartCalc)),
       ],
       chartTotal,
     ),

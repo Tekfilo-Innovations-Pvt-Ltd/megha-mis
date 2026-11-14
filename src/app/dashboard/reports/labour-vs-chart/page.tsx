@@ -135,6 +135,7 @@ export default function LabourVsChartPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [productType, setProductType] = useState('');
+  const [factory, setFactory] = useState(''); // factory id, '' = all
   const [jobCategory, setJobCategory] = useState(DEFAULT_JOB_CATEGORY);
   const [skuInput, setSkuInput] = useState('');
   const [sku, setSku] = useState('');
@@ -186,7 +187,7 @@ export default function LabourVsChartPage() {
     return () => clearTimeout(t);
   }, [bagNoInput]);
 
-  const filterParams = { ...(chartCode ? { chart: chartCode } : {}), from, to, productType, jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, status, sort };
+  const filterParams = { ...(chartCode ? { chart: chartCode } : {}), from, to, productType, ...(factory ? { factory } : {}), jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, status, sort };
   const group = tableView === 'skus' ? 'sku' : 'line';
   const reportQuery = new URLSearchParams({ ...filterParams, group, page: String(page), size: String(pageSize) }).toString();
   const downloadUrl =
@@ -201,13 +202,38 @@ export default function LabourVsChartPage() {
   useEffect(() => {
     setPage(0);
     setOpen(null);
-  }, [companyId, chartCode, from, to, productType, jobCategory, sku, skuExact, invNo, jewNo, bagNo, status, sort, pageSize, group]);
+  }, [companyId, chartCode, from, to, productType, factory, jobCategory, sku, skuExact, invNo, jewNo, bagNo, status, sort, pageSize, group]);
   useEffect(() => setPageInput(String(page + 1)), [page]);
+  // Filters handed over in the address — the dashboard's drill-down links
+  // (?from=&to=&jobCategory=&productType=&factory=&jewNo=&tab=). Read once;
+  // a company switch afterwards starts from the defaults.
   useEffect(() => {
-    setProductType('');
-    setJobCategory(DEFAULT_JOB_CATEGORY);
-    setChartCode(''); // each company starts on its own default chart
-  }, [companyId]);
+    const q = new URLSearchParams(window.location.search);
+    if (!q.toString()) return;
+    setFrom(q.get('from') ?? '');
+    setTo(q.get('to') ?? '');
+    setProductType(q.get('productType') ?? '');
+    setFactory(q.get('factory') ?? '');
+    if (q.has('jobCategory')) setJobCategory(q.get('jobCategory') ?? '');
+    if (q.get('chart')) setChartCode(q.get('chart')!);
+    if (q.get('jewNo')) setJewNoInput(q.get('jewNo')!);
+    if (q.get('invNo')) setInvNoInput(q.get('invNo')!);
+    const st = q.get('status');
+    if (st && STATUS_FILTERS.some((x) => x.code === st)) setStatus(st as ReportStatusFilter);
+    const tab = q.get('tab');
+    if (tab === 'lines' || tab === 'lots' || tab === 'jobwork' || tab === 'skus') setTableView(tab);
+  }, []);
+  const [seenCompany, setSeenCompany] = useState<number | null>(null);
+  useEffect(() => {
+    if (companyId == null) return;
+    if (seenCompany != null && seenCompany !== companyId) {
+      setProductType('');
+      setFactory('');
+      setJobCategory(DEFAULT_JOB_CATEGORY);
+      setChartCode(''); // each company starts on its own default chart
+    }
+    setSeenCompany(companyId);
+  }, [companyId, seenCompany]);
   // Charts to compare with — the company's default first.
   const charts = useQuery({
     queryKey: ['price-charts', companyId],
@@ -254,11 +280,12 @@ export default function LabourVsChartPage() {
     setTableView('lines');
   };
   const rowNoun = tableView === 'skus' ? 'SKUs' : 'lines';
-  const hasFilters = !!(from || to || productType || skuInput || invNoInput || jewNoInput || bagNoInput || jobCategory !== DEFAULT_JOB_CATEGORY);
+  const hasFilters = !!(from || to || productType || factory || skuInput || invNoInput || jewNoInput || bagNoInput || jobCategory !== DEFAULT_JOB_CATEGORY);
   const clearFilters = () => {
     setFrom('');
     setTo('');
     setProductType('');
+    setFactory('');
     setJobCategory(DEFAULT_JOB_CATEGORY);
     setSkuInput('');
     setSkuExact(false);
@@ -428,6 +455,12 @@ export default function LabourVsChartPage() {
             <select value={productType} onChange={(e) => setProductType(e.target.value)} className={`${inputClass} max-w-[14rem]`}>
               <option value="">All product types</option>
               {data?.productTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Factory</span>
+            <select value={factory} onChange={(e) => setFactory(e.target.value)} className={`${inputClass} max-w-[14rem]`}>
+              <option value="">All factories</option>
+              {data?.factories.map((x) => <option key={x.id} value={String(x.id)}>{x.name}</option>)}
             </select>
           </label>
           <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Job category</span>
