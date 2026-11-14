@@ -29,7 +29,7 @@ Besides ERP users, MIS can have one shared, MIS-only login for people without an
 
 ```bash
 npx tsx scripts/set-shared-login.ts mis-viewer            # generates and prints a password once
-npx tsx scripts/set-shared-login.ts mis-viewer 'MyPass…'  # or give your own (10+ characters)
+npx tsx scripts/set-shared-login.ts mis-viewer 'MyPass…'  # or give your own (any length, 4+ characters)
 ```
 
 Restart the server afterwards. Remove the `MIS_SHARED_*` lines from `.env` to switch it off.

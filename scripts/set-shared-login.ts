@@ -16,9 +16,14 @@ if (!username || !/^[A-Za-z0-9._@-]{3,64}$/.test(username)) {
   console.error('Usage: npx tsx scripts/set-shared-login.ts <username> [password] [--name "Display name"]  (username: 3-64 letters, digits, . _ @ -)');
   process.exit(1);
 }
-if (given != null && given.length < 10) {
-  console.error('Password must be at least 10 characters.');
+// A short password is the owner's call (2026-11-14: a simple internal one was
+// asked for) — warned about, not refused; only an empty-ish one is refused.
+if (given != null && given.length < 4) {
+  console.error('Password must be at least 4 characters.');
   process.exit(1);
+}
+if (given != null && given.length < 10) {
+  console.warn(`Note: a ${given.length}-character password is easy to guess — fine for internal use, but don't expose the server to the internet with it.`);
 }
 // Readable generated password: 4 groups of 4 from an alphabet without look-alikes.
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
