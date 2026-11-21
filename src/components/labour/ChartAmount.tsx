@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { ChartCalc } from '@/lib/chartCalc';
 import { fmtNum } from '@/lib/format';
+import SkuOtherCompanies, { type SkuContext } from '@/components/labour/SkuOtherCompanies';
 
 // A chart amount that opens how it was worked out: the chart rows looked up
 // for each metal charge / stone lot, rate × quantity, and how the parts add
@@ -18,13 +19,14 @@ type Props = {
   getCalc?: () => Promise<ChartCalc | null>;
   currency?: string;
   empty?: string; // shown when there is no value
+  sku?: SkuContext; // the line's SKU and figures — the pop-up then sets them beside the same SKU in the user's other companies
 };
 
-export default function ChartAmount({ value, digits = 2, calc, getCalc, currency, empty = '' }: Props) {
+export default function ChartAmount({ value, digits = 2, calc, getCalc, currency, empty = '', sku }: Props) {
   const [open, setOpen] = useState(false);
   if (value == null) return <>{empty}</>;
   const text = fmtNum(value, digits);
-  if (!calc && !getCalc) return <>{text}</>;
+  if (!calc && !getCalc && !sku) return <>{text}</>;
   return (
     <>
       <button
@@ -38,13 +40,13 @@ export default function ChartAmount({ value, digits = 2, calc, getCalc, currency
       >
         {text}
       </button>
-      {open && <CalcDialog calc={calc} getCalc={getCalc} currency={currency} onClose={() => setOpen(false)} />}
+      {open && <CalcDialog calc={calc} getCalc={getCalc} currency={currency} sku={sku} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function CalcDialog({ calc, getCalc, currency, onClose }: { calc?: ChartCalc | null; getCalc?: () => Promise<ChartCalc | null>; currency?: string; onClose: () => void }) {
-  const [loaded, setLoaded] = useState<{ calc: ChartCalc | null; error?: string } | null>(calc ? { calc } : null);
+function CalcDialog({ calc, getCalc, currency, sku, onClose }: { calc?: ChartCalc | null; getCalc?: () => Promise<ChartCalc | null>; currency?: string; sku?: SkuContext; onClose: () => void }) {
+  const [loaded, setLoaded] = useState<{ calc: ChartCalc | null; error?: string } | null>(calc ? { calc } : getCalc ? null : { calc: null });
 
   useEffect(() => {
     if (loaded || !getCalc) return;
@@ -71,7 +73,7 @@ function CalcDialog({ calc, getCalc, currency, onClose }: { calc?: ChartCalc | n
         role="dialog"
         aria-modal="true"
         aria-labelledby="chart-calc-title"
-        className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl bg-white shadow-xl text-sm text-slate-700 text-left"
+        className={`w-full ${sku ? 'max-w-4xl' : 'max-w-2xl'} max-h-[85vh] overflow-y-auto rounded-xl bg-white shadow-xl text-sm text-slate-700 text-left`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
@@ -122,6 +124,7 @@ function CalcDialog({ calc, getCalc, currency, onClose }: { calc?: ChartCalc | n
               {c.note && <p className="text-xs text-slate-500">{c.note}</p>}
             </>
           )}
+          {sku && <SkuOtherCompanies context={sku} currency={currency} />}
         </div>
       </div>
     </div>,

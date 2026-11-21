@@ -8,7 +8,9 @@ import { jobWorkBlock, jobWorkTotals, missingSide, rangeText, stoneSetting } fro
 import { fmtDate, fmtNum } from '@/lib/format';
 import { metalTypeLabel } from '@/lib/metalType';
 import ChartAmount from '@/components/labour/ChartAmount';
+import InvoiceLabourAmount from '@/components/labour/InvoiceLabourAmount';
 import { SIDE } from '@/components/labour/sides';
+import type { SkuContext } from '@/components/labour/SkuOtherCompanies';
 import type { ColumnDef, HiddenColumns } from '@/components/labour/columns';
 
 // "Job Work" view of the labour-vs-chart report, in the layout of the ERP's
@@ -21,8 +23,10 @@ import type { ColumnDef, HiddenColumns } from '@/components/labour/columns';
 // Columns can be hidden (JOB_WORK_COLUMNS); the less used ones start hidden
 // so the table needs less sideways scrolling.
 
-const cell = 'border border-slate-300 px-2 py-1 align-middle';
-const head = `${cell} bg-[#F9F5F5] font-semibold text-slate-800 text-center`;
+// Cells keep their width (no wrapping) and the table scrolls sideways; headers may
+// wrap onto two lines, and Remarks wraps.
+const cell = 'border border-slate-300 px-2 py-1 align-middle whitespace-nowrap';
+const head = `${cell} bg-[#F9F5F5] font-semibold text-slate-800 text-center !whitespace-normal`;
 const text = `${cell} text-center`;
 const num = `${cell} text-right tabular-nums whitespace-nowrap`;
 
@@ -68,7 +72,7 @@ const METAL_COLS: { key: string; label: string; hidden?: boolean; cls: string; r
 
 // Colour stones and diamonds share one "Stone Details" group — colour stones
 // first, then diamonds — told apart by the Stone Type column.
-type StoneCtx = { s: LotRow; diamond: boolean; set: ReturnType<typeof stoneSetting>; missing: ReturnType<typeof missingSide> };
+type StoneCtx = { s: LotRow; diamond: boolean; set: ReturnType<typeof stoneSetting>; missing: ReturnType<typeof missingSide>; sku?: SkuContext };
 const STONE_COLS: {
   key: string; label: string; hidden?: boolean; side?: Side; numeric?: boolean;
   render: (c: StoneCtx) => ReactNode; missingOn?: 'invoice' | 'chart';
@@ -79,17 +83,19 @@ const STONE_COLS: {
   { key: 'master', label: 'Master Lot Code', hidden: true, render: ({ s }) => s.masterLotCode },
   { key: 'commodity', label: 'Commodity', render: ({ s }) => s.commodity },
   { key: 'shape', label: 'Shape', render: ({ s }) => s.item },
-  { key: 'mm', label: 'MM Size', render: ({ s }) => s.mmSize },
+  // Long MM sizes (several sizes in one) are cut with … — the whole value on hover.
+  { key: 'mm', label: 'MM Size', render: ({ s }) => <span className="block max-w-[6.5rem] truncate" title={s.mmSize ?? undefined}>{s.mmSize}</span> },
   { key: 'pcs', label: 'PCS', numeric: true, render: ({ s }) => fmt(s.pcs, 0), total: (t) => fmt((t.colourPcs ?? 0) + (t.diamondPcs ?? 0), 0) },
   { key: 'wt', label: 'Stone Wt', numeric: true, render: ({ s }) => fmt(s.wt, 3), total: (t) => fmt((t.colourWt ?? 0) + (t.diamondWt ?? 0), 3) },
   { key: 'invRate', label: 'Invoice Setting Rate', hidden: true, side: 'invoice', numeric: true, missingOn: 'invoice', render: ({ set }) => fmt(set.invoiceRate, 2) },
   { key: 'invAmt', label: 'Invoice Setting Amt', side: 'invoice', numeric: true, missingOn: 'invoice', render: ({ set }) => fmt(set.invoiceAmount, 2) },
   { key: 'chartRate', label: 'Chart Setting Rate', hidden: true, side: 'chart', numeric: true, missingOn: 'chart', render: ({ set }) => fmt(set.chartRate, 2) },
-  { key: 'chartAmt', label: 'Chart Setting Amt', side: 'chart', numeric: true, missingOn: 'chart', render: ({ s, set }) => <ChartAmount value={set.chartAmount} calc={s.chartCalc} /> },
+  { key: 'chartAmt', label: 'Chart Setting Amt', side: 'chart', numeric: true, missingOn: 'chart', render: ({ s, set, sku }) => <ChartAmount value={set.chartAmount} calc={s.chartCalc} sku={sku} /> },
 ];
 
 const LABOUR_COLS = [
   { key: 'labourType', label: 'Labour Type' },
+  { key: 'labourRate', label: 'Invoice Rate', side: 'invoice' as Side },
   { key: 'labourInv', label: 'Invoice Amount', side: 'invoice' as Side },
   { key: 'labourChart', label: 'Chart Amount', side: 'chart' as Side },
 ];
@@ -118,11 +124,13 @@ export default function JobWorkTable({
   startIndex,
   pageOnly,
   hidden,
+  chartCode,
 }: {
   groups: LotReport['groups'];
   startIndex: number; // S.No of the first block, so numbering carries across pages
   pageOnly: boolean; // more lines exist than shown — the total row covers this page only
   hidden: HiddenColumns;
+  chartCode?: string; // the chart the report used — the chart pop-up then also shows the SKU in other companies
 }) {
   const blocks = groups.map(jobWorkBlock);
   const t = jobWorkTotals(blocks);
@@ -137,16 +145,16 @@ export default function JobWorkTable({
   const firstTotal = lineCols.findIndex((c) => c.total);
   const labelSpan = Math.max(1, firstTotal < 0 ? lineCols.length : firstTotal);
 
-  const stoneCells = (st: { s: LotRow; diamond: boolean } | undefined) => {
+  const stoneCells = (st: { s: LotRow; diamond: boolean } | undefined, sku?: SkuContext) => {
     if (!st) return stoneCols.map((c) => <td key={c.key} className={`${c.numeric ? num : text} ${tint(c.side)}`} />);
-    const ctx: StoneCtx = { ...st, set: stoneSetting(st.s), missing: missingSide(st.s) };
+    const ctx: StoneCtx = { ...st, set: stoneSetting(st.s), missing: missingSide(st.s), sku };
     return stoneCols.map((c) => (
       <td key={c.key} className={`${c.numeric ? num : `${text} whitespace-nowrap`} ${tint(c.side, !!c.missingOn && ctx.missing === c.missingOn)}`}>{c.render(ctx)}</td>
     ));
   };
 
   return (
-    <table className="min-w-full text-xs border-collapse border border-slate-300 bg-white">
+    <table className="w-max min-w-full text-xs border-collapse border border-slate-300 bg-white">
       <thead>
         <tr>
           {lineCols.map((c) => <th key={c.key} rowSpan={2} className={head}>{c.label}</th>)}
@@ -172,6 +180,8 @@ export default function JobWorkTable({
           const stones = [...b.colour.map((s) => ({ s, diamond: false })), ...b.diamonds.map((s) => ({ s, diamond: true }))];
           // Stones stack in one group here, so a block can be taller than the ERP layout's.
           const height = Math.max(1, l.metals.length, stones.length, b.labour.length);
+          // Every chart amount of this jewellery also shows the same SKU in the user's other companies.
+          const skuCtx: SkuContext | undefined = chartCode && l.skuNo ? { skuNo: l.skuNo, chartCode, qty: l.qty, invoicedLabour: b.invoiceTotal ?? 0, chart: b.chartTotal ?? null, gramsPerPiece: l.qty > 0 && l.netWt > 0 ? l.netWt / l.qty : null } : undefined;
           return (
             <Fragment key={l.invDetId}>
               {Array.from({ length: height }, (_, k) => {
@@ -182,25 +192,30 @@ export default function JobWorkTable({
                   <tr key={k} className={`${k === 0 ? BLOCK_START : ''} ${i % 2 ? 'bg-slate-100' : 'bg-white'}`}>
                     {k === 0 && lineCols.map((c) => <td key={c.key} rowSpan={height} className={c.cls}>{c.render(l, startIndex + i + 1)}</td>)}
                     {metalCols.map((c) => <td key={c.key} className={c.cls}>{c.render(m)}</td>)}
-                    {stoneCells(stones[k])}
+                    {stoneCells(stones[k], skuCtx)}
                     {show('labourType') && <td className={`${text} whitespace-nowrap`}>{x?.process ?? ''}</td>}
-                    {show('labourInv') && <td className={`${num} ${tint('invoice', xMissing === 'invoice')}`}>{fmt(x?.invoiceAmount, 2)}</td>}
+                    {show('labourRate') && <td className={`${num} ${tint('invoice')}`}>{fmt(x?.invoiceRate, 4)}</td>}
+                    {show('labourInv') && (
+                      <td className={`${num} ${tint('invoice', xMissing === 'invoice')}`}>
+                        {x && <InvoiceLabourAmount value={x.invoiceAmount} process={x.process} sources={x.sources} />}
+                      </td>
+                    )}
                     {show('labourChart') && (
                       <td className={`${num} ${tint('chart', xMissing === 'chart' && !x?.chartRange)}`} title={x?.chartRange ? `Model-making range — ${x.chartRange.basis}` : undefined}>
                         {x?.chartRange && x.chartAmount == null ? (
                           <span className={`whitespace-nowrap ${x.chartRange.status === 'ABOVE' ? 'text-red-700 font-medium' : 'text-slate-500'}`}>{rangeText(x.chartRange)}</span>
                         ) : (
-                          <ChartAmount value={x?.chartAmount} calc={x?.chartCalc} />
+                          <ChartAmount value={x?.chartAmount} calc={x?.chartCalc} sku={skuCtx} />
                         )}
                       </td>
                     )}
                     {k === 0 && (
                       <>
                         {show('totalInv') && <td rowSpan={height} className={`${num} ${tint('invoice')}`}>{fmt(b.invoiceTotal, 2)}</td>}
-                        {show('totalChart') && <td rowSpan={height} className={`${num} ${tint('chart')}`}><ChartAmount value={b.chartTotal} calc={b.chartCalc} /></td>}
+                        {show('totalChart') && <td rowSpan={height} className={`${num} ${tint('chart')}`}><ChartAmount value={b.chartTotal} calc={b.chartCalc} sku={skuCtx} /></td>}
                         {show('diff') && <td rowSpan={height} className={`${num} font-medium ${diffClass(b.difference)} ${tint('diff', b.incomplete)}`}>{fmt(b.difference, 2)}</td>}
                         {show('diffPct') && <td rowSpan={height} className={`${num} font-medium ${diffClass(b.differencePct)} ${tint('diff', b.incomplete)}`}>{pct(b.differencePct)}</td>}
-                        {show('remarks') && <td rowSpan={height} className={`${cell} text-left min-w-[13rem] text-slate-600`}>{b.remarks}</td>}
+                        {show('remarks') && <td rowSpan={height} className={`${cell} text-left !whitespace-normal min-w-[16rem] max-w-[24rem] text-slate-600`}>{b.remarks}</td>}
                       </>
                     )}
                   </tr>

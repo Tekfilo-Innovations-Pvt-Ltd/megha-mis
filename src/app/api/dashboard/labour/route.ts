@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCompanyId } from '@/lib/company';
 import { buildLabourDashboard } from '@/lib/labourDashboard';
 import { isDate, resolveComparison } from '@/lib/labourReportParams';
+import { isMetalType, type MetalType } from '@/lib/metalType';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// GET /api/dashboard/labour?from=&to=&jobCategory=&factory=&productType=
+// GET /api/dashboard/labour?from=&to=&jobCategory=&factory=&productType=&metalType=
 // (optional: chart=&settingType=&tolerance= — default: the company's chart / Prong/Pave / 5%)
 // The dashboard figures for the selected company: Labour vs Chart totals by
 // factory, labour type, product type and month, top over-charged lines,
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
       jobCategory: p.get('jobCategory')?.trim() || undefined,
       productType: p.get('productType')?.trim() || undefined,
       factoryId: Number(p.get('factory')) || undefined,
+      metalType: isMetalType(p.get('metalType')) ? (p.get('metalType') as MetalType) : undefined,
     },
     resolved.chart,
     resolved.options,

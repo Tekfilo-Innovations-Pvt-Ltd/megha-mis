@@ -63,6 +63,7 @@ export type LotNoteCode =
   | 'NOT_INVOICED'
   | 'TYPE_DEFAULT'
   | 'TYPE_INVOICE'
+  | 'TYPE_CHOSEN'
   | 'PRICED_AS_OVAL'
   | 'BILLED_ON_LINE'
   | 'LINE_AVERAGE'
@@ -88,7 +89,7 @@ export interface LotRow {
   commodity: string | null; // metal(s) of the line / the stone's commodity
   item: string; // charge name / stone shape
   settingType: string | null; // chart setting type name
-  settingTypeSource: 'ERP' | 'INVOICE' | 'DEFAULT' | null;
+  settingTypeSource: 'ERP' | 'CHOSEN' | 'INVOICE' | 'DEFAULT' | null;
   size: string | null; // chart weight range / size row used
   mmSize: string | null; // stones: MM size(s) as on the invoice
   wt: number | null;
@@ -116,8 +117,24 @@ export interface LotRow {
 // Stones whose setting is recorded on the component itself keep both amounts
 // in the stone section instead. Chart amounts with no invoice row to sit
 // against get a row of their own.
+// One row of the factory invoice's labour table behind a labour breakup row.
+export interface InvoiceLabourSource {
+  process: string;
+  description: string | null;
+  qty: number | null;
+  rate: number | null; // invoice currency
+  amount: number;
+  currency: string; // the invoice's currency
+  inputCurrency: string | null; // what the factory entered, in its own currency
+  inputExchangeRate: number | null;
+  inputRate: number | null;
+  inputAmount: number | null;
+}
+
 export interface LabourBreakupRow {
   process: string;
+  invoiceRate?: number | null; // the labour table's rate; several rows: amount ÷ qty
+  sources?: InvoiceLabourSource[]; // the invoice labour rows the invoice amount is made of
   invoiceAmount: number | null; // null on a chart-only row
   chartAmount: number | null; // null when the chart has no rate for this process
   chartCalc?: ChartCalc | null; // the metal charges / stones that make up the chart amount
@@ -140,14 +157,34 @@ const settingKind = (process: string): StoneSectionKind => {
 };
 
 export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: PriceChart): LabourBreakupRow[] {
-  const byProcess = new Map<string, { process: string; cls: LabourClass | null; invoice: number; chart: number | null; parts: (ChartCalcPart | null)[] }>();
+  const byProcess = new Map<string, { process: string; cls: LabourClass | null; invoice: number; chart: number | null; parts: (ChartCalcPart | null)[]; sources: InvoiceLabourSource[] }>();
   for (const l of input.labour) {
     if (l.amount === 0) continue;
     const key = l.process.trim();
-    const row = byProcess.get(key) ?? { process: key, cls: classifyProcess(key), invoice: 0, chart: null, parts: [] };
+    const row = byProcess.get(key) ?? { process: key, cls: classifyProcess(key), invoice: 0, chart: null, parts: [], sources: [] };
     row.invoice += l.amount;
+    row.sources.push({
+      process: l.process.trim(),
+      description: l.description ?? null,
+      qty: l.qty ?? null,
+      rate: l.rate ?? null,
+      amount: l.amount,
+      currency: input.currency,
+      inputCurrency: l.inputCurrency ?? null,
+      inputExchangeRate: l.inputExchangeRate ?? null,
+      inputRate: l.inputRate ?? null,
+      inputAmount: l.inputAmount ?? null,
+    });
     byProcess.set(key, row);
   }
+  // One row: its rate. Several: amount ÷ qty when they all have a qty, else their rate if they share one.
+  const rateOf = (sources: InvoiceLabourSource[]): number | null => {
+    if (sources.length === 1) return sources[0].rate;
+    const qty = sources.reduce((s, x) => s + (x.qty ?? 0), 0);
+    if (qty > 0 && sources.every((x) => (x.qty ?? 0) > 0)) return r4(sources.reduce((s, x) => s + x.amount, 0) / qty);
+    const rates = new Set(sources.map((x) => x.rate));
+    return rates.size === 1 ? sources[0].rate : null;
+  };
   const rows = Array.from(byProcess.values());
   const extra: LabourBreakupRow[] = [];
   const calcTitle = (process: string) => `Chart amount — ${process}`;
@@ -172,7 +209,7 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
     if (target) {
       target.chart = r4((target.chart ?? 0) + ch.chartAmount);
       target.parts.push(part);
-    } else extra.push({ process: ch.name, invoiceAmount: null, chartAmount: ch.chartAmount, chartCalc: chartCalc(calcTitle(ch.name), [part], ch.chartAmount) });
+    } else extra.push({ process: ch.name, invoiceRate: null, invoiceAmount: null, chartAmount: ch.chartAmount, chartCalc: chartCalc(calcTitle(ch.name), [part], ch.chartAmount) });
   }
 
   // Stone setting chart → the setting process for the stone's section.
@@ -220,6 +257,7 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
   for (const [name, x] of Array.from(sectionRows)) {
     extra.push({
       process: name,
+      invoiceRate: null, // setting recorded on the stone components — see the stone section
       invoiceAmount: r4(x.invoice),
       chartAmount: x.chart,
       chartCalc: x.chart != null ? chartCalc(calcTitle(name), x.parts, x.chart) : null,
@@ -232,6 +270,8 @@ export function buildLabourBreakup(input: LineInput, c: LineComparison, chart: P
       const m = ranges.get(r.process);
       return {
         process: r.process,
+        invoiceRate: rateOf(r.sources),
+        sources: r.sources,
         invoiceAmount: r4(r.invoice),
         chartAmount: r.chart,
         chartCalc: r.chart != null ? chartCalc(calcTitle(r.process), r.parts, r.chart) : null,
@@ -266,6 +306,7 @@ const NOTES: Record<Exclude<LotNoteCode, `METAL_${string}` | `STONE_${string}`>,
   NOT_INVOICED: { short: 'Not invoiced', text: 'No metal labour invoiced' },
   TYPE_DEFAULT: { short: 'Default type', text: 'Setting type not recorded — default used' },
   TYPE_INVOICE: { short: 'Type from invoice', text: 'Setting type from the invoice labour description' },
+  TYPE_CHOSEN: { short: 'Type chosen', text: 'Setting type not recorded in the ERP — the type chosen under Setting types is used' },
   PRICED_AS_OVAL: { short: 'Priced as oval', text: 'Priced on the Oval column of the chart: round / triangle / cushion Ruby or Sapphire, cushion / trillion colour stones' },
   BILLED_ON_LINE: { short: 'Billed on line', text: 'Invoiced in the line-level setting row' },
   LINE_AVERAGE: { short: 'Avg per stone', text: 'Invoice setting labour not tied to one lot — rates are averages per stone' },
@@ -431,6 +472,7 @@ export function buildLotGroup(info: LineInfo, input: LineInput, c: LineCompariso
       st.issue ? stoneNote(st.issue) : null,
       st.settingTypeSource === 'DEFAULT' ? note('TYPE_DEFAULT') : null,
       st.settingTypeSource === 'INVOICE' ? note('TYPE_INVOICE') : null,
+      st.settingTypeSource === 'CHOSEN' ? note('TYPE_CHOSEN') : null,
       st.pricedAsShape === 'OVAL' ? note('PRICED_AS_OVAL') : null,
       !own && hasLineSetting ? note('BILLED_ON_LINE') : null,
     ].filter((n): n is LotNote => n != null);

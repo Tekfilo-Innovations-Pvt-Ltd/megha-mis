@@ -29,7 +29,7 @@ const LAYOUT = [
   ['csInvRate', [11]], ['csInvAmt', [11]], ['csChartRate', [11]], ['csChartAmt', [11]],
   ['dLot', [19]], ['dMaster', [19]], ['dCommodity', [19]], ['dShape', [13]], ['dMm', [11]], ['dPcs', [9]], ['dWt', [10]],
   ['dInvRate', [11]], ['dInvAmt', [11]], ['dChartRate', [11]], ['dChartAmt', [11]],
-  ['labour', [22]], ['labourInv', [12]], ['labourChart', [12]],
+  ['labour', [22]], ['labourRate', [11]], ['labourInv', [12]], ['labourChart', [12]],
   ['totalInv', [13]], ['totalChart', [13]], ['diff', [13]], ['diffPct', [11]], ['remarks', [45]],
 ] as const;
 type Key = (typeof LAYOUT)[number][0];
@@ -66,14 +66,14 @@ const SUB_HEADERS: [string, string][] = [
   [C.metal, 'Metal'], [C.metalLot, 'Metal Lot Code'], [C.metalWt, 'Metal Wt'],
   ...STONE_HEADERS.map((h, i): [string, string] => [[C.csLot, C.csMaster, C.csCommodity, C.csShape, C.csMm, C.csPcs, C.csWt, C.csInvRate, C.csInvAmt, C.csChartRate, C.csChartAmt][i], h]),
   ...STONE_HEADERS.map((h, i): [string, string] => [[C.dLot, C.dMaster, C.dCommodity, C.dShape, C.dMm, C.dPcs, C.dWt, C.dInvRate, C.dInvAmt, C.dChartRate, C.dChartAmt][i], h]),
-  [C.labour, 'Labour Type'], [C.labourInv, 'Invoice Amount'], [C.labourChart, 'Chart Amount'],
+  [C.labour, 'Labour Type'], [C.labourRate, 'Invoice Rate'], [C.labourInv, 'Invoice Amount'], [C.labourChart, 'Chart Amount'],
 ];
 
 const FORMATS: Partial<Record<string, string>> = {
   [C.invDt]: 'dd-mmm-yyyy', [C.qty]: '0', [C.grossWt]: WT, [C.metalWt]: WT,
   [C.csPcs]: '#,##0.##', [C.csWt]: WT, [C.csInvRate]: AMOUNT, [C.csInvAmt]: AMOUNT, [C.csChartRate]: AMOUNT, [C.csChartAmt]: AMOUNT,
   [C.dPcs]: '#,##0.##', [C.dWt]: WT, [C.dInvRate]: AMOUNT, [C.dInvAmt]: AMOUNT, [C.dChartRate]: AMOUNT, [C.dChartAmt]: AMOUNT,
-  [C.labourInv]: AMOUNT, [C.labourChart]: AMOUNT, [C.totalInv]: AMOUNT, [C.totalChart]: AMOUNT, [C.diff]: DIFF, [C.diffPct]: PCT,
+  [C.labourRate]: '#,##0.0000', [C.labourInv]: AMOUNT, [C.labourChart]: AMOUNT, [C.totalInv]: AMOUNT, [C.totalChart]: AMOUNT, [C.diff]: DIFF, [C.diffPct]: PCT,
 };
 
 const colIndex = (letters: string) => letters.split('').reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
@@ -156,6 +156,7 @@ export function addJobWorkSheet(wb: ExcelJS.Workbook, groups: LotGroup[]) {
     stoneCells(diamonds, [C.dLot, C.dMaster, C.dCommodity, C.dShape, C.dMm, C.dPcs, C.dWt, C.dInvRate, C.dInvAmt, C.dChartRate, C.dChartAmt]);
     labour.forEach((x, k) => {
       ws.getCell(`${C.labour}${row + k}`).value = x.process;
+      ws.getCell(`${C.labourRate}${row + k}`).value = x.invoiceRate ?? null;
       ws.getCell(`${C.labourInv}${row + k}`).value = x.invoiceAmount;
       ws.getCell(`${C.labourChart}${row + k}`).value = x.chartAmount ?? (x.chartRange ? rangeText(x.chartRange) : null);
       const missing = x.chartRange ? null : missingSide(x);

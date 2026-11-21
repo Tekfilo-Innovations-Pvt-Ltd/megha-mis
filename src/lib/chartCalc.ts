@@ -51,6 +51,7 @@ const r4 = (v: number) => Math.round(v * 10000) / 10000;
 
 const SOURCE_TEXT = {
   ERP: 'recorded on the stone in the ERP',
+  CHOSEN: 'not recorded in the ERP — type chosen under Setting types',
   INVOICE: 'named on the invoice setting labour row',
   DEFAULT: 'not recorded — default used',
 } as const;

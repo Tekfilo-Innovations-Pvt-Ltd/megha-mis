@@ -7,6 +7,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { LabourDashboard } from '@/lib/labourDashboard';
 import { fmtDate, fmtNum } from '@/lib/format';
+import { METAL_TYPES } from '@/lib/metalType';
 
 // Factory Invoice & Labour vs Chart dashboard (BRD 2026-11-14). Every figure is
 // the Labour vs Chart report's for the same filters; every section links into
@@ -120,10 +121,11 @@ export default function DashboardPage() {
   const [factory, setFactory] = useState('');
   const [productType, setProductType] = useState('');
   const [jobCategory, setJobCategory] = useState(DEFAULT_JOB_CATEGORY);
+  const [metalType, setMetalType] = useState(''); // '' = all metal types
 
   const filters = useMemo(
-    () => Object.fromEntries(Object.entries({ from, to, factory, productType, jobCategory }).filter(([, v]) => v !== '')),
-    [from, to, factory, productType, jobCategory],
+    () => Object.fromEntries(Object.entries({ from, to, factory, productType, jobCategory, metalType }).filter(([, v]) => v !== '')),
+    [from, to, factory, productType, jobCategory, metalType],
   );
   const query = new URLSearchParams(filters).toString();
   const q = useQuery({
@@ -147,6 +149,7 @@ export default function DashboardPage() {
     setFactory('');
     setProductType('');
     setJobCategory(DEFAULT_JOB_CATEGORY);
+    setMetalType('');
   };
   const inputClass = 'px-2.5 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500';
 
@@ -182,6 +185,12 @@ export default function DashboardPage() {
           <select value={productType} onChange={(e) => setProductType(e.target.value)} className={`${inputClass} max-w-[14rem]`}>
             <option value="">All product types</option>
             {d?.filterOptions.productTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </label>
+        <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Metal type</span>
+          <select value={metalType} onChange={(e) => setMetalType(e.target.value)} className={`${inputClass} max-w-[12rem]`} title="From the metal lots on each item: gold colour comes from the lot code (14KW, 14KY, 14KTT…)">
+            <option value="">All metal types</option>
+            {METAL_TYPES.map((t) => <option key={t.code} value={t.code}>{t.label}</option>)}
           </select>
         </label>
         <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Job category</span>
@@ -222,6 +231,11 @@ export default function DashboardPage() {
           {/* 3. By factory */}
           <Section title="Difference by factory" sub={`Compared labour vs chart, ${cur} · the chart's own factory (Wilson) should sit near 0%`}>
             <DiffBars rows={d.byFactory} label={(r) => r.name} href={(r) => report({ factory: String(r.factoryId) })} currency={cur} />
+          </Section>
+
+          {/* By metal type */}
+          <Section title="Difference by metal type" sub={`Compared labour vs chart per item metal (Gold, Gold 2 Tone, Silver…), ${cur}`}>
+            <DiffBars rows={d.byMetalType} label={(r) => `${r.label} (${r.lines.toLocaleString()})`} href={(r) => report({ metalType: r.metalType })} currency={cur} />
           </Section>
 
           {/* 6. Trend */}
@@ -265,7 +279,7 @@ export default function DashboardPage() {
                 <table className="w-full text-sm">
                   <thead className="text-xs text-slate-500 text-left">
                     <tr>
-                      {['Invoice', 'Date', 'Jewellery', 'Bag', 'SKU', 'Factory'].map((h) => <th key={h} className="font-medium pb-1.5 pr-3">{h}</th>)}
+                      {['Invoice', 'Date', 'Jewellery', 'Bag', 'SKU', 'Metal type', 'Factory'].map((h) => <th key={h} className="font-medium pb-1.5 pr-3">{h}</th>)}
                       {['Invoiced', 'Chart', 'Difference', 'Diff %'].map((h) => <th key={h} className="font-medium pb-1.5 pl-3 text-right">{h}</th>)}
                     </tr>
                   </thead>
@@ -277,6 +291,7 @@ export default function DashboardPage() {
                         <td className="py-1.5 pr-3 whitespace-nowrap"><Link href={report({ jewNo: r.jewNo, tab: 'jobwork' })} className="text-amber-700 hover:underline">{r.jewNo}</Link></td>
                         <td className="py-1.5 pr-3 whitespace-nowrap">{r.bagNo ?? '—'}</td>
                         <td className="py-1.5 pr-3 whitespace-nowrap">{r.skuNo ?? '—'}</td>
+                        <td className="py-1.5 pr-3 whitespace-nowrap">{r.metalType}</td>
                         <td className="py-1.5 pr-3">{r.factory}</td>
                         <td className="py-1.5 pl-3 text-right tabular-nums">{fmtNum(r.invoiced)}</td>
                         <td className="py-1.5 pl-3 text-right tabular-nums">{fmtNum(r.chart)}</td>

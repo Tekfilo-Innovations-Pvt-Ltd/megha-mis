@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import seed from '../../data/price-charts/w8-gold-2018-12-01.json';
 import type { PriceChart } from './priceChart';
 import { classifyProcess, combinedClasses, compareLine, modelMakingRange, settingTypesIn, type LineInput, type StoneInput } from './labourComparison';
+import { settingChoiceKey } from './settingChoices';
 
 const chart = seed as PriceChart;
 const options = { defaultSettingType: 'PRONG_PAVE', tolerancePct: 5 };
@@ -334,5 +335,24 @@ describe('Ruby and Sapphire priced as oval', () => {
   it('leaves oval Ruby as it was', () => {
     expect(priced({ commodity: 'RUBY', commodityGroup: 'RUBY', shape: 'OVAL', mmSize: '7x5' })).toMatchObject({ rangeId: 'RUBY_SAPPHIRE-3' });
     expect(priced({ commodity: 'RUBY', commodityGroup: 'RUBY', shape: 'OVAL', mmSize: '7x5' }).pricedAsShape).toBeUndefined();
+  });
+});
+
+describe('chosen setting types', () => {
+  const dia = stone({ componentId: 11, lotCode: 'D-0011', carats: 1.056, pieces: 182, mmSize: '1.1' });
+  const key = settingChoiceKey('D-0011', 'ROUND', '1.1');
+
+  it('uses the type chosen for a stone with none in the ERP, before the invoice row and the default', () => {
+    const line = { ...ringLine, labour: [{ process: 'Setting', amount: 50, description: 'Micro pave' }], stones: [dia] };
+    expect(compareLine(line, chart, options).setting.stones[0]).toMatchObject({ settingType: 'MICRO_PAVE', settingTypeSource: 'INVOICE' });
+    const chosen = compareLine(line, chart, { ...options, settingTypeChoices: { [key]: 'CHANNEL' } }).setting.stones[0];
+    expect(chosen).toMatchObject({ settingType: 'CHANNEL', settingTypeSource: 'CHOSEN', settingTypeAssumed: false });
+  });
+
+  it('keeps the ERP type, and a chosen default only for stones with nothing else', () => {
+    const erp = compareLine({ ...ringLine, stones: [{ ...dia, settingType: 'BEZEL' }] }, chart, { ...options, settingTypeChoices: { [key]: 'CHANNEL' } });
+    expect(erp.setting.stones[0]).toMatchObject({ settingType: 'BEZEL', settingTypeSource: 'ERP' });
+    const def = compareLine({ ...ringLine, labour: [], stones: [dia] }, chart, { ...options, defaultSettingType: 'MICRO_PAVE' });
+    expect(def.setting.stones[0]).toMatchObject({ settingType: 'MICRO_PAVE', settingTypeSource: 'DEFAULT' });
   });
 });

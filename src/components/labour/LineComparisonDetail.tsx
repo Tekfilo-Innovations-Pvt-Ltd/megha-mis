@@ -158,6 +158,7 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
                     <td className="px-3 py-1.5 whitespace-nowrap">
                       {s.settingType ? SETTING_TYPE_NAMES[s.settingType] ?? s.settingType : '—'}
                       {s.settingTypeAssumed && <span className="text-xs text-slate-500"> (default)</span>}
+                      {s.settingTypeSource === 'CHOSEN' && <span className="text-xs text-slate-500"> (chosen)</span>}
                     </td>
                     <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}>{s.chartRate != null ? fmtNum(s.chartRate, 3) : '—'}</td>
                     <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}><ChartAmount value={s.chartAmount} calc={calcs?.stones[s.componentId]} currency={currency} empty="—" /></td>

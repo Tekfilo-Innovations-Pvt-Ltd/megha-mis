@@ -11,6 +11,8 @@ import LotDetailTable from '@/components/labour/LotDetailTable';
 import SkuTable from '@/components/labour/SkuTable';
 import ChartAmount from '@/components/labour/ChartAmount';
 import StoneCorrectionsBar from '@/components/labour/StoneCorrectionsBar';
+import SettingTypesPanel from '@/components/labour/SettingTypesPanel';
+import type { SkuContext } from '@/components/labour/SkuOtherCompanies';
 import type { ChartCalc, LineCalcs } from '@/lib/chartCalc';
 import type { LabourReport, LotReport, ReportSort, ReportStatusFilter } from '@/lib/labourReport';
 import type { LineComparison } from '@/lib/labourComparison';
@@ -153,9 +155,9 @@ function LineDrilldown({ invDetId, chart, currency }: { invDetId: number; chart:
 
 // A chart amount on a Lines row: its working is the line's, fetched on click
 // (and shared with the drill-down).
-function LineChartAmount({ invDetId, chart, value, pick, currency }: { invDetId: number; chart: string; value: number; pick: (c: LineCalcs) => ChartCalc | null; currency: string }) {
+function LineChartAmount({ invDetId, chart, value, pick, currency, sku }: { invDetId: number; chart: string; value: number; pick: (c: LineCalcs) => ChartCalc | null; currency: string; sku?: SkuContext }) {
   const queryClient = useQueryClient();
-  return <ChartAmount value={value} currency={currency} getCalc={() => queryClient.fetchQuery(lineQuery(invDetId, chart)).then((d) => pick(d.calcs))} />;
+  return <ChartAmount value={value} currency={currency} sku={sku} getCalc={() => queryClient.fetchQuery(lineQuery(invDetId, chart)).then((d) => pick(d.calcs))} />;
 }
 
 export default function LabourVsChartPage() {
@@ -308,6 +310,9 @@ export default function LabourVsChartPage() {
   }, [data, jobCategory]);
   const s = data?.summary;
   const currency = data?.chart.currency ?? '';
+  // A line's SKU and figures, so its chart pop-ups also show the same SKU in the user's other companies.
+  const lineSku = (r: LabourReport['rows'][number]): SkuContext | undefined =>
+    data && r.skuNo ? { skuNo: r.skuNo, chartCode: data.chart.code, qty: r.qty, invoicedLabour: r.invoicedLabour, chart: r.chartTotal, gramsPerPiece: r.gramsPerPiece } : undefined;
   const totalPages = data ? Math.max(1, Math.ceil(data.totalRows / pageSize)) : 1;
   const goToPage = (p: number) => {
     setPage(Math.min(totalPages - 1, Math.max(0, p)));
@@ -372,6 +377,7 @@ export default function LabourVsChartPage() {
       </div>
 
       <StoneCorrectionsBar />
+      <SettingTypesPanel filterParams={stoneFilterParams} />
 
       {report.isError &&<p className="text-sm text-red-600">{(report.error as Error).message}</p>}
       {report.isLoading && <p className="text-sm text-slate-500">Comparing invoice lines with the chart…</p>}
@@ -580,7 +586,7 @@ export default function LabourVsChartPage() {
               <div className={`overflow-x-auto ${lots.isFetching ? 'opacity-60' : ''}`}>
                 {lots.isError && <p className="px-4 py-3 text-sm text-red-600">{(lots.error as Error).message}</p>}
                 {lots.isLoading && <p className="px-4 py-3 text-sm text-slate-500">Loading lot detail…</p>}
-                {lots.data && <LotDetailTable groups={lots.data.groups} hidden={lotColumns.hidden} />}
+                {lots.data && <LotDetailTable groups={lots.data.groups} hidden={lotColumns.hidden} chartCode={data.chart.code} />}
               </div>
             ) : tableView === 'jobwork' ? (
               <div className={`overflow-x-auto p-2 ${lots.isFetching ? 'opacity-60' : ''}`}>
@@ -592,7 +598,7 @@ export default function LabourVsChartPage() {
                       <span className="inline-block h-3 w-5 rounded-sm border border-slate-300 bg-amber-100" />
                       Chart or invoice amount missing — that jewellery&apos;s difference is not like for like; see Remarks.
                     </p>
-                    <JobWorkTable groups={lots.data.groups} startIndex={page * pageSize} pageOnly={lots.data.totalLines > lots.data.groups.length} hidden={jobWorkColumns.hidden} />
+                    <JobWorkTable groups={lots.data.groups} startIndex={page * pageSize} pageOnly={lots.data.totalLines > lots.data.groups.length} hidden={jobWorkColumns.hidden} chartCode={data.chart.code} />
                   </>
                 )}
               </div>
@@ -652,17 +658,17 @@ export default function LabourVsChartPage() {
                           )}
                           {show('chartMetal') && (
                             <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.chart.cell} ${edge('chart', 'chartMetal')}`}>
-                              {r.metalChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.metalChart} pick={(c) => c.metal} currency={currency} /> : '—'}
+                              {r.metalChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.metalChart} pick={(c) => c.metal} currency={currency} sku={lineSku(r)} /> : '—'}
                             </td>
                           )}
                           {show('chartSetting') && (
                             <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.chart.cell} ${edge('chart', 'chartSetting')}`}>
-                              {r.settingChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.settingChart} pick={(c) => c.setting} currency={currency} /> : '—'}
+                              {r.settingChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.settingChart} pick={(c) => c.setting} currency={currency} sku={lineSku(r)} /> : '—'}
                             </td>
                           )}
                           {show('chartTotal') && (
                             <td className={`px-3 py-2 text-right tabular-nums font-medium ${SIDE.chart.cell} ${edge('chart', 'chartTotal')}`}>
-                              {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.chartTotal} pick={(c) => c.total} currency={currency} />}
+                              {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.chartTotal} pick={(c) => c.total} currency={currency} sku={lineSku(r)} />}
                             </td>
                           )}
                           {show('diff') && <td className={`px-3 py-2 text-right ${SIDE.diff.cell} ${edge('diff', 'diff')}`}>{r.status === 'NOT_COMPARABLE' ? '—' : <Variance value={r.variance} />}</td>}

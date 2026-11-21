@@ -183,9 +183,24 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
        WHERE c.inv_det_id = ANY(${ids}) AND c.is_deleted = 0 AND l.lot_type = 'METAL'
        GROUP BY 1, 2, 3
        ORDER BY 1, min(c.component_id)`,
-    erp.$queryRaw<{ inv_det_id: number; process: string; amount: number; qty: number; description: string | null }[]>`
+    erp.$queryRaw<
+      {
+        inv_det_id: number;
+        process: string;
+        amount: number;
+        qty: number;
+        description: string | null;
+        rate: number | null;
+        input_currency: string | null;
+        input_exchange_rate: number | null;
+        input_rate: number | null;
+        input_amount: number | null;
+      }[]
+    >`
       SELECT x.inv_det_id, p.process_name AS process, x.amount::float8 AS amount, x.qty::float8 AS qty,
-             nullif(trim(x.description), '') AS description
+             nullif(trim(x.description), '') AS description, x.rate::float8 AS rate,
+             nullif(trim(x.input_currency), '') AS input_currency, x.input_exchange_rate::float8 AS input_exchange_rate,
+             x.input_rate::float8 AS input_rate, x.input_amount::float8 AS input_amount
         FROM tbl_factory_invoice_labour x
         JOIN tbl_process p ON p.process_id = x.process_id
        WHERE x.inv_det_id = ANY(${ids}) AND x.is_deleted = 0
@@ -275,7 +290,17 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
       productType: r.product_type,
       currency: r.currency,
       metal: lineMetal.filter((m) => m.in_grams).map((m) => ({ commodity: m.commodity, grams: m.grams, lotCode: m.lot_code })),
-      labour: lineLabour.map((l) => ({ process: l.process, amount: l.amount, qty: l.qty, description: l.description })),
+      labour: lineLabour.map((l) => ({
+        process: l.process,
+        amount: l.amount,
+        qty: l.qty,
+        description: l.description,
+        rate: l.rate,
+        inputCurrency: l.input_currency,
+        inputExchangeRate: l.input_exchange_rate,
+        inputRate: l.input_rate,
+        inputAmount: l.input_amount,
+      })),
       stones: lineStones.map(
         (s): StoneInput => ({
           componentId: s.component_id,

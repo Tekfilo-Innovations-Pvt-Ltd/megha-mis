@@ -11,6 +11,8 @@ import {
 import { listInvoiceFactories, listLineJobCategories, listLineProductTypes, loadComparisonLines, type LineFilter } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
 import { getStoneCorrections } from '@/lib/stoneCorrectionsStore';
+import { invoiceIdsWithMetalType } from '@/lib/factoryInvoice';
+import { METAL_TYPES, metalTypeLabel, type MetalType } from '@/lib/metalType';
 
 // The Factory Invoice / Labour vs Chart dashboard (BRD "Factory Invoice &
 // Labour vs Chart Dashboard", 2026-11-14). Every figure is a total of the same
@@ -75,6 +77,7 @@ export async function buildLabourDashboard(filter: LineFilter, chart: PriceChart
   const status = { lines: lines.length, comparable: 0, inLine: 0, over: 0, under: 0, notComparable: 0, partial: 0 };
   const byFactory = new Map<number, Pair & { factoryId: number; name: string; lines: number }>();
   const byProductType = new Map<string, Pair & { productType: string; lines: number }>();
+  const byMetalType = new Map<MetalType, Pair & { metalType: MetalType; label: string; lines: number }>();
   const byLabourType = new Map<string, Pair & { labourType: string }>();
   const byMonth = new Map<string, Pair & { month: string }>();
   const byInvoice = new Map<number, Pair>();
@@ -106,6 +109,10 @@ export async function buildLabourDashboard(filter: LineFilter, chart: PriceChart
       p.lines++;
       add(p, c.invoicedCompared, c.chartTotal);
       byProductType.set(pt, p);
+      const mt = byMetalType.get(i.metalType) ?? { metalType: i.metalType, label: metalTypeLabel(i.metalType), lines: 0, invoiced: 0, chart: 0 };
+      mt.lines++;
+      add(mt, c.invoicedCompared, c.chartTotal);
+      byMetalType.set(i.metalType, mt);
       const month = i.invDt.slice(0, 7);
       const m = byMonth.get(month) ?? { month, invoiced: 0, chart: 0 };
       add(m, c.invoicedCompared, c.chartTotal);
@@ -175,6 +182,7 @@ export async function buildLabourDashboard(filter: LineFilter, chart: PriceChart
         bagNo: i.bagNo,
         skuNo: i.skuNo,
         factory: i.factoryName.trim(),
+        metalType: metalTypeLabel(i.metalType),
         invoiced: r2(c.invoicedCompared),
         chart: r2(c.chartTotal),
         difference: r2(c.variance),
@@ -183,13 +191,15 @@ export async function buildLabourDashboard(filter: LineFilter, chart: PriceChart
     });
 
   // Factory invoices in the period (whole invoices: product type and job
-  // category are line filters, so they don't apply here), and the unpaid ones
-  // with their chart difference.
+  // category are line filters, so they don't apply here; a metal type keeps the
+  // invoices with at least one item of it, as on the Factory Invoices screen),
+  // and the unpaid ones with their chart difference.
   const invWhere: string[] = ['m.company_id = $1', 'm.is_deleted = 0'];
   const params: unknown[] = [filter.companyId];
   if (filter.from) invWhere.push(`m.inv_dt >= $${params.push(filter.from)}::date`);
   if (filter.to) invWhere.push(`m.inv_dt <= $${params.push(filter.to)}::date`);
   if (filter.factoryId) invWhere.push(`m.factory_id = $${params.push(filter.factoryId)}`);
+  if (filter.metalType) invWhere.push(`m.inv_id = ANY($${params.push(await invoiceIdsWithMetalType(filter.companyId, filter.metalType))}::int[])`);
   const invoices = await erp.$queryRawUnsafe<
     { inv_id: number; inv_no: string; inv_dt: Date; factory: string; currency: string; payment_status: string | null; amount: number; paid: number }[]
   >(
@@ -248,6 +258,8 @@ export async function buildLabourDashboard(filter: LineFilter, chart: PriceChart
     byFactory: sortByDiff(Array.from(byFactory.values()).map(done)),
     byLabourType: sortByDiff(Array.from(byLabourType.values()).map(done)),
     byProductType: sortByDiff(Array.from(byProductType.values()).map(done)),
+    // In the usual metal type order (Gold, Gold 2 Tone, Silver…), not by difference.
+    byMetalType: METAL_TYPES.map((t) => byMetalType.get(t.code)).filter((x) => x != null).map(done),
     byMonth: Array.from(byMonth.values()).map(done).sort((a, b) => a.month.localeCompare(b.month)),
     topLines,
     outstandingOverChart,

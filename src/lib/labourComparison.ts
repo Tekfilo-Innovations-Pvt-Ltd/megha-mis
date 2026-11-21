@@ -7,6 +7,7 @@ import {
   type PriceChart,
   type SizeRange,
 } from '@/lib/priceChart';
+import { settingChoiceKey } from '@/lib/settingChoices';
 
 // Applies a factory price chart to one factory-invoice line and compares the
 // labour the factory invoiced with what the chart says it should be.
@@ -44,6 +45,13 @@ export interface LabourInput {
   amount: number;
   qty?: number; // as on the labour row — usually 1 (a line total), sometimes the pieces
   description?: string | null; // factories put the stone lot code or the setting type here
+  // As on tbl_factory_invoice_labour: rate in the invoice currency, and what the
+  // factory entered in its own currency. Shown in the labour breakup only.
+  rate?: number | null;
+  inputCurrency?: string | null;
+  inputExchangeRate?: number | null;
+  inputRate?: number | null;
+  inputAmount?: number | null;
 }
 
 export interface StoneInput {
@@ -69,6 +77,8 @@ export interface StoneInput {
 export interface ComparisonOptions {
   defaultSettingType: string; // chart setting type code used when the ERP records none
   tolerancePct: number; // variance within ±this is "in line"
+  // The user's setting type per stone the ERP records none for (src/lib/settingChoices.ts).
+  settingTypeChoices?: Record<string, string>;
 }
 
 // ---------- labour process → chart charge ----------
@@ -205,7 +215,7 @@ export interface MetalComparison {
   charges: ChargeComparison[];
 }
 
-export type SettingTypeSource = 'ERP' | 'INVOICE' | 'DEFAULT';
+export type SettingTypeSource = 'ERP' | 'CHOSEN' | 'INVOICE' | 'DEFAULT';
 
 export interface StoneComparison {
   componentId: number;
@@ -595,11 +605,13 @@ export function compareLine(line: LineInput, chart: PriceChart, options: Compari
     out.sizeLabel = sizeLabel(range);
 
     const types = chart.settingChart.settingTypes.filter((t) => t.sections.includes(group.section));
-    const source: SettingTypeSource = s.settingType ? 'ERP' : invoiceType ? 'INVOICE' : 'DEFAULT';
+    // The ERP's type; else the user's choice for this stone; else the invoice's; else the default.
+    const chosen = s.settingType ? undefined : options.settingTypeChoices?.[settingChoiceKey(s.lotCode, s.shape, s.mmSize)];
+    const source: SettingTypeSource = s.settingType ? 'ERP' : chosen ? 'CHOSEN' : invoiceType ? 'INVOICE' : 'DEFAULT';
     const type =
       source === 'ERP'
         ? types.find((t) => t.erpNames.includes(s.settingType!))
-        : types.find((t) => t.code === (source === 'INVOICE' ? invoiceType : options.defaultSettingType));
+        : types.find((t) => t.code === (source === 'CHOSEN' ? chosen : source === 'INVOICE' ? invoiceType : options.defaultSettingType));
     if (!type) return { ...out, settingTypeSource: source, issue: 'NO_SETTING_TYPE' };
     out.settingType = type.code;
     out.settingTypeSource = source;

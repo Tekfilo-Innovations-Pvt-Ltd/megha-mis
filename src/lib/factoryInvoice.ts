@@ -255,7 +255,7 @@ export interface FactoryInvoiceFilter {
 
 // Invoices with a line of the given metal type. The type is worked out from
 // each line's metal lots (src/lib/metalType.ts), so it can't be a SQL filter.
-async function invoiceIdsWithMetalType(companyId: number, metalType: MetalType): Promise<number[]> {
+export async function invoiceIdsWithMetalType(companyId: number, metalType: MetalType): Promise<number[]> {
   const rows = await erp.$queryRaw<{ inv_id: number; inv_det_id: number; commodity: string; lot_code: string }[]>`
     SELECT d.inv_id, d.inv_det_id, co.commodity_name AS commodity, l.lot_code
       FROM tbl_factory_invoice_main m
