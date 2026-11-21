@@ -1,3 +1,4 @@
+import { isMetalType, type MetalType } from '@/lib/metalType';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCompanyId } from '@/lib/company';
 import { loadComparisonLines } from '@/lib/labourComparisonData';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // Comparing every line of the company takes several seconds — above Vercel's 10 s default.
 export const maxDuration = 60;
 
-// GET /api/reports/labour-vs-chart/setting-not-in-chart?from=&to=&productType=&jobCategory=&sku=&skuExact=1&invNo=&jewNo=&bagNo=
+// GET /api/reports/labour-vs-chart/setting-not-in-chart?from=&to=&productType=&jobCategory=&sku=&skuExact=1&invNo=&jewNo=&bagNo=&metalType=
 // Excel of every stone on the matching lines that has no setting chart value,
 // grouped into commodity / shape / setting type / ct-range combinations.
 // Line status and sort don't apply — this is per stone, not per line.
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
     invNo: p.get('invNo')?.trim() || undefined,
     jewNo: p.get('jewNo')?.trim() || undefined,
     bagNo: p.get('bagNo')?.trim() || undefined,
+    metalType: isMetalType(p.get('metalType')) ? (p.get('metalType') as MetalType) : undefined,
   });
   const { missing } = findMissingStones(info, lines, resolved.chart, resolved.options);
   const body = await settingNotInChartWorkbook(groupMissingStones(missing), missing, { chartName: resolved.chart.name });

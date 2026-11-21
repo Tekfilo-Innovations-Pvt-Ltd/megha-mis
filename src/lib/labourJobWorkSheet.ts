@@ -1,3 +1,4 @@
+import { metalTypeLabel } from '@/lib/metalType';
 import type ExcelJS from 'exceljs';
 import { jobWorkBlock, jobWorkTotals, missingSide, rangeText, stoneSetting } from '@/lib/jobWorkBlocks';
 import type { LotGroup, LotRow } from '@/lib/labourLotReport';
@@ -21,7 +22,7 @@ const colLetters = (n: number): string => (n > 26 ? colLetters(Math.floor((n - 1
 // colour stone Master Lot Code). Letters are worked out from this order, so a
 // column can be added without renumbering the rest.
 const LAYOUT = [
-  ['sNo', [3, 6]], ['invNo', [14]], ['invDt', [11]], ['soNo', [11]], ['jobNo', [10]], ['bagNo', [10]], ['sku', [13, 2]], ['category', [11]], ['size', [3, 7]],
+  ['sNo', [3, 6]], ['invNo', [14]], ['invDt', [11]], ['soNo', [11]], ['jobNo', [10]], ['bagNo', [10]], ['sku', [13, 2]], ['category', [11]], ['metalType', [12]], ['size', [3, 7]],
   ['qty', [6]], ['grossWt', [10]],
   ['metal', [10]], ['metalLot', [14]], ['metalWt', [11]],
   ['csLot', [19]], ['csMaster', [11, 8]], ['csCommodity', [19]], ['csShape', [13]], ['csMm', [11]], ['csPcs', [9]], ['csWt', [10]],
@@ -54,7 +55,7 @@ const GROUPS: [string, string, string][] = [
 
 // Columns that span both header rows and, in the body, the whole jewellery block.
 const LINE_COLUMNS: [string, string][] = [
-  [C.sNo, 'S.No'], [C.invNo, 'Job Work\nInvoice No'], [C.invDt, 'Invoice\nDate'], [C.soNo, 'SO No'], [C.jobNo, 'Job No'], [C.bagNo, 'Bag No'],[C.sku, 'SKU No'], [C.category, 'Jewellery\nCategory'], [C.size, 'Size'],
+  [C.sNo, 'S.No'], [C.invNo, 'Job Work\nInvoice No'], [C.invDt, 'Invoice\nDate'], [C.soNo, 'SO No'], [C.jobNo, 'Job No'], [C.bagNo, 'Bag No'],[C.sku, 'SKU No'], [C.category, 'Jewellery\nCategory'], [C.metalType, 'Metal\nType'], [C.size, 'Size'],
   [C.qty, 'Qty'], [C.grossWt, 'Gross\nWt(g)'],
   [C.totalInv, 'Total Invoice Labor\nAmount'], [C.totalChart, 'Total Chart Labor\nAmount'], [C.diff, 'Difference\nAmount'], [C.diffPct, 'Difference\n%'],
   [C.remarks, 'Remarks'],
@@ -126,7 +127,7 @@ export function addJobWorkSheet(wb: ExcelJS.Workbook, groups: LotGroup[]) {
     const l = b.group.line;
     const { colour, diamonds, labour, height } = b;
     const lineValues: [string, unknown][] = [
-      [C.sNo, i + 1], [C.invNo, l.invNo], [C.invDt, new Date(`${l.invDt}T00:00:00Z`)], [C.soNo, l.soNo], [C.jobNo, l.jewNo], [C.bagNo, l.bagNo],[C.sku, l.skuNo], [C.category, l.productType], [C.size, l.size],
+      [C.sNo, i + 1], [C.invNo, l.invNo], [C.invDt, new Date(`${l.invDt}T00:00:00Z`)], [C.soNo, l.soNo], [C.jobNo, l.jewNo], [C.bagNo, l.bagNo],[C.sku, l.skuNo], [C.category, l.productType], [C.metalType, metalTypeLabel(l.metalType)], [C.size, l.size],
       [C.qty, l.qty], [C.grossWt, l.grossWt],
       [C.totalInv, b.invoiceTotal], [C.totalChart, b.chartTotal], [C.diff, b.difference], [C.diffPct, b.differencePct],
       [C.remarks, b.remarks || null],

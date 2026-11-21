@@ -8,11 +8,13 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Variance, VariancePct, variancePct } from '@/components/labour/LineComparisonDetail';
 import type { FactoryInvoiceListResponse, FactoryInvoiceTotals } from '@/lib/factoryInvoice';
 import { fmtDate, fmtNum } from '@/lib/format';
+import { METAL_TYPES, metalTypeLabel } from '@/lib/metalType';
+import { SIDE, SideLegend } from '@/components/labour/sides';
 
 const PAGE_SIZE = 25;
 
 type Chart = { chart: { code: string; name: string; currency: string } };
-type Filters = { search: string; invNo: string; jewNo: string };
+type Filters = { search: string; invNo: string; jewNo: string; metalType: string };
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -34,12 +36,13 @@ export default function FactoryInvoicesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [invNoInput, setInvNoInput] = useState('');
   const [jewNoInput, setJewNoInput] = useState('');
-  const filters: Filters = { search: useDebounced(searchInput), invNo: useDebounced(invNoInput), jewNo: useDebounced(jewNoInput) };
+  const [metalType, setMetalType] = useState(''); // '' = all metal types
+  const filters: Filters = { search: useDebounced(searchInput), invNo: useDebounced(invNoInput), jewNo: useDebounced(jewNoInput), metalType };
   const [page, setPage] = useState(0);
   const companyId = useSession().data?.user?.companyId ?? null;
 
   // A different company or filter has a different number of pages.
-  useEffect(() => setPage(0), [companyId, filters.search, filters.invNo, filters.jewNo]);
+  useEffect(() => setPage(0), [companyId, filters.search, filters.invNo, filters.jewNo, filters.metalType]);
 
   const filterQuery = new URLSearchParams(filters).toString();
   const { data, isLoading, isError, isFetching } = useQuery({
@@ -58,7 +61,7 @@ export default function FactoryInvoicesPage() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalElements / PAGE_SIZE)) : 1;
   const chartCurrency = data?.chart.currency ?? totals.data?.chart.currency ?? '';
-  const hasFilters = !!(searchInput || invNoInput || jewNoInput);
+  const hasFilters = !!(searchInput || invNoInput || jewNoInput || metalType);
   const t = totals.data;
 
   const inputClass = 'px-2.5 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500';
@@ -84,40 +87,56 @@ export default function FactoryInvoicesPage() {
           </span>
         </label>
         {hasFilters && (
-          <button onClick={() => { setSearchInput(''); setInvNoInput(''); setJewNoInput(''); }} className="px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100">
+          <button onClick={() => { setSearchInput(''); setInvNoInput(''); setJewNoInput(''); setMetalType(''); }} className="px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100">
             Clear filters
           </button>
         )}
-        {data && <span className="ml-auto text-xs text-slate-500 self-center">Chart labour: {data.chart.name}</span>}
+        <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Metal type</span>
+          <select value={metalType} onChange={(e) => setMetalType(e.target.value)} className={`${inputClass} max-w-[12rem]`} title="Invoices with at least one item of this metal type">
+            <option value="">All metal types</option>
+            {METAL_TYPES.map((x) => <option key={x.code} value={x.code}>{x.label}</option>)}
+          </select>
+        </label>
+        <span className="ml-auto self-center flex flex-col items-end gap-1">
+          <SideLegend />
+          {data && <span className="text-xs text-slate-500">Chart: {data.chart.name}</span>}
+        </span>
       </section>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-left">
             <tr>
-              <th className="px-4 py-3 font-semibold">Invoice</th>
-              <th className="px-4 py-3 font-semibold">Date</th>
-              <th className="px-4 py-3 font-semibold">Factory</th>
-              <th className="px-4 py-3 font-semibold">Reference</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold text-right">Lines</th>
-              <th className="px-4 py-3 font-semibold text-right">Qty</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Total labour on the invoice">Invoice labour</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Chart labour of the invoice's comparable lines; below it, the invoiced labour it is compared with">Chart labour</th>
-              <th className="px-4 py-3 font-semibold text-right whitespace-nowrap" title="Compared invoice labour − chart labour">Diff Amount</th>
-              <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Diff %</th>
-              <th className="px-4 py-3 font-semibold text-right">Amount</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold">Invoice</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold">Date</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold">Factory</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold whitespace-nowrap">Metal type</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold">Reference</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold">Status</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold text-right">Lines</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold text-right">Qty</th>
+              <th colSpan={2} className={`px-4 py-1.5 font-semibold text-center border-l-2 border-white ${SIDE.invoice.head}`}>Invoice labour</th>
+              <th className={`px-4 py-1.5 font-semibold text-center border-l-2 border-white ${SIDE.chart.head}`}>Chart labour</th>
+              <th colSpan={2} className={`px-4 py-1.5 font-semibold text-center border-l-2 border-white ${SIDE.diff.head}`}>Difference</th>
+              <th rowSpan={2} className="px-4 py-2 font-semibold text-right">Amount</th>
+            </tr>
+            <tr>
+              <th className={`px-4 py-1.5 font-medium text-right border-l-2 border-white ${SIDE.invoice.head}`} title="Total labour on the invoice">Total</th>
+              <th className={`px-4 py-1.5 font-medium text-right ${SIDE.invoice.head}`} title="The part of the invoice labour the chart could price — what the chart labour is set against">Compared</th>
+              <th className={`px-4 py-1.5 font-medium text-right border-l-2 border-white ${SIDE.chart.head}`} title="Chart labour of the invoice's comparable lines">Chart</th>
+              <th className={`px-4 py-1.5 font-medium text-right border-l-2 border-white ${SIDE.diff.head}`} title="Compared invoice labour − chart labour">Amount</th>
+              <th className={`px-4 py-1.5 font-medium text-right ${SIDE.diff.head}`}>%</th>
             </tr>
           </thead>
           <tbody className={`divide-y divide-slate-100 ${isFetching ? 'opacity-60' : ''}`}>
             {isLoading && (
-              <tr><td colSpan={12} className="px-4 py-8 text-center text-slate-500">Loading…</td></tr>
+              <tr><td colSpan={14} className="px-4 py-8 text-center text-slate-500">Loading…</td></tr>
             )}
             {isError && (
-              <tr><td colSpan={12} className="px-4 py-8 text-center text-red-600">Could not load invoices from the ERP.</td></tr>
+              <tr><td colSpan={14} className="px-4 py-8 text-center text-red-600">Could not load invoices from the ERP.</td></tr>
             )}
             {data?.content.length === 0 && (
-              <tr><td colSpan={12} className="px-4 py-8 text-center text-slate-500">No factory invoices found.</td></tr>
+              <tr><td colSpan={14} className="px-4 py-8 text-center text-slate-500">No factory invoices found.</td></tr>
             )}
             {data?.content.map((inv) => (
               <tr key={inv.invId} className="hover:bg-amber-50/50">
@@ -128,6 +147,7 @@ export default function FactoryInvoicesPage() {
                 </td>
                 <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(inv.invDt)}</td>
                 <td className="px-4 py-2.5">{inv.factoryName}</td>
+                <td className="px-4 py-2.5">{inv.metalTypes.length ? inv.metalTypes.map(metalTypeLabel).join(', ') : '—'}</td>
                 <td className="px-4 py-2.5 text-slate-500">{inv.referenceNo || '—'}</td>
                 <td className="px-4 py-2.5">
                   <span className="text-xs">{inv.status || '—'}</span>
@@ -135,17 +155,13 @@ export default function FactoryInvoicesPage() {
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{inv.lineCount}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums">{fmtNum(inv.totalQty, 0)}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums">{fmtNum(inv.totalLabourAmount)}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums whitespace-nowrap">
-                  {inv.chartLabour == null ? '—' : (
-                    <>
-                      {fmtNum(inv.chartLabour)}
-                      <span className="block text-xs text-slate-500" title={`${inv.comparableLines} of ${inv.lineCount} lines comparable`}>vs {fmtNum(inv.invoicedCompared)} inv.</span>
-                    </>
-                  )}
+                <td className={`px-4 py-2.5 text-right tabular-nums border-l-2 border-white font-medium ${SIDE.invoice.cell}`}>{fmtNum(inv.totalLabourAmount)}</td>
+                <td className={`px-4 py-2.5 text-right tabular-nums ${SIDE.invoice.cell}`} title={`${inv.comparableLines} of ${inv.lineCount} lines comparable`}>
+                  {inv.chartLabour == null ? '—' : fmtNum(inv.invoicedCompared)}
                 </td>
-                <td className="px-4 py-2.5 text-right">{inv.chartLabour == null ? '—' : <Variance value={inv.invoicedCompared! - inv.chartLabour} />}</td>
-                <td className="px-4 py-2.5 text-right">{inv.chartLabour == null ? '—' : <VariancePct pct={variancePct(inv.invoicedCompared!, inv.chartLabour)} />}</td>
+                <td className={`px-4 py-2.5 text-right tabular-nums border-l-2 border-white font-medium ${SIDE.chart.cell}`}>{inv.chartLabour == null ? '—' : fmtNum(inv.chartLabour)}</td>
+                <td className={`px-4 py-2.5 text-right border-l-2 border-white ${SIDE.diff.cell}`}>{inv.chartLabour == null ? '—' : <Variance value={inv.invoicedCompared! - inv.chartLabour} />}</td>
+                <td className={`px-4 py-2.5 text-right ${SIDE.diff.cell}`}>{inv.chartLabour == null ? '—' : <VariancePct pct={variancePct(inv.invoicedCompared!, inv.chartLabour)} />}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums whitespace-nowrap">
                   {fmtNum(inv.totalAmount)} <span className="text-xs text-slate-400">{inv.currency}</span>
                 </td>
@@ -155,23 +171,17 @@ export default function FactoryInvoicesPage() {
           {data && data.content.length > 0 && (
             <tfoot className={`bg-slate-50 border-t-2 border-slate-200 font-semibold ${totals.isFetching ? 'opacity-60' : ''}`}>
               <tr>
-                <td colSpan={7} className="px-4 py-3">
+                <td colSpan={8} className="px-4 py-3">
                   Total of {data.totalElements.toLocaleString()} matching invoices
                   {totals.isLoading && <span className="ml-2 text-xs font-normal text-slate-500">calculating…</span>}
                   {totals.isError && <span className="ml-2 text-xs font-normal text-red-600">{(totals.error as Error).message}</span>}
                   {t && <span className="block text-xs font-normal text-slate-500">Chart compared on {t.comparableLines.toLocaleString()} of {t.lines.toLocaleString()} lines · {chartCurrency}</span>}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">{t ? fmtNum(t.labour) : ''}</td>
-                <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">
-                  {t && (
-                    <>
-                      {fmtNum(t.chartLabour)}
-                      <span className="block text-xs font-normal text-slate-500">vs {fmtNum(t.invoicedCompared)} inv.</span>
-                    </>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">{t && <Variance value={t.variance} />}</td>
-                <td className="px-4 py-3 text-right">{t && <VariancePct pct={variancePct(t.invoicedCompared, t.chartLabour)} />}</td>
+                <td className={`px-4 py-3 text-right tabular-nums border-l-2 border-white ${SIDE.invoice.head}`}>{t ? fmtNum(t.labour) : ''}</td>
+                <td className={`px-4 py-3 text-right tabular-nums ${SIDE.invoice.head}`}>{t ? fmtNum(t.invoicedCompared) : ''}</td>
+                <td className={`px-4 py-3 text-right tabular-nums border-l-2 border-white ${SIDE.chart.head}`}>{t ? fmtNum(t.chartLabour) : ''}</td>
+                <td className={`px-4 py-3 text-right border-l-2 border-white ${SIDE.diff.head}`}>{t && <Variance value={t.variance} />}</td>
+                <td className={`px-4 py-3 text-right ${SIDE.diff.head}`}>{t && <VariancePct pct={variancePct(t.invoicedCompared, t.chartLabour)} />}</td>
                 <td />
               </tr>
             </tfoot>

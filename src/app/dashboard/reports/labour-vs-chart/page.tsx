@@ -17,6 +17,36 @@ import type { LineComparison } from '@/lib/labourComparison';
 import { fmtDate, fmtNum } from '@/lib/format';
 import { settingNotCountedRemark } from '@/lib/jobWorkBlocks';
 import type { PriceChartSummary } from '@/lib/priceChartStore';
+import { METAL_TYPES, isMetalType, metalTypeLabel } from '@/lib/metalType';
+import { SIDE, SideLegend } from '@/components/labour/sides';
+import { ColumnPicker, useHiddenColumns, type ColumnDef } from '@/components/labour/columns';
+import { JOB_WORK_COLUMNS } from '@/components/labour/JobWorkTable';
+import { LOT_DETAIL_COLUMNS } from '@/components/labour/LotDetailTable';
+
+// Columns of the Lines tab the viewer can show or hide; the metal / setting
+// split and g/pc start hidden (the totals carry the comparison).
+const LINES_COLUMNS: ColumnDef[] = [
+  { key: 'invoice', label: 'Invoice', group: 'Line' },
+  { key: 'jewellery', label: 'Jewellery', group: 'Line' },
+  { key: 'metalType', label: 'Metal type', group: 'Line' },
+  { key: 'productType', label: 'Product type', group: 'Line' },
+  { key: 'qty', label: 'Qty', group: 'Line' },
+  { key: 'gpc', label: 'g/pc', group: 'Line', hidden: true },
+  { key: 'status', label: 'Status', group: 'Line' },
+  { key: 'invMetal', label: 'Metal', group: 'Invoice labour', hidden: true },
+  { key: 'invSetting', label: 'Setting', group: 'Invoice labour', hidden: true },
+  { key: 'invTotal', label: 'Total', group: 'Invoice labour' },
+  { key: 'chartMetal', label: 'Metal', group: 'Chart labour', hidden: true },
+  { key: 'chartSetting', label: 'Setting', group: 'Chart labour', hidden: true },
+  { key: 'chartTotal', label: 'Total', group: 'Chart labour' },
+  { key: 'diff', label: 'Amount', group: 'Difference' },
+  { key: 'diffPct', label: '%', group: 'Difference' },
+];
+const LINES_GROUPS = {
+  inv: ['invMetal', 'invSetting', 'invTotal'],
+  chart: ['chartMetal', 'chartSetting', 'chartTotal'],
+  diff: ['diff', 'diffPct'],
+} as const;
 
 type ReportResponse = LabourReport & { chart: { code: string; name: string; currency: string } };
 type LotResponse = LotReport & { chart: { code: string; name: string; currency: string } };
@@ -61,9 +91,9 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json();
 }
 
-function Tile({ label, children, sub }: { label: string; children: React.ReactNode; sub?: React.ReactNode }) {
+function Tile({ label, children, sub, tone }: { label: string; children: React.ReactNode; sub?: React.ReactNode; tone?: keyof typeof SIDE }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 px-4 py-3">
+    <div className={`rounded-xl border border-slate-200 px-4 py-3 ${tone ? SIDE[tone].cell : 'bg-white'}`}>
       <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-900 tabular-nums">{children}</div>
       {sub && <div className="mt-0.5 text-xs text-slate-500">{sub}</div>}
@@ -83,10 +113,10 @@ function Breakdown({ title, rows, currency }: { title: string; rows: LabourRepor
           <tr>
             <th className="px-3 py-1.5 text-left font-medium" />
             <th className="px-2 py-1.5 text-right font-medium">Lines</th>
-            <th className="px-2 py-1.5 text-right font-medium">Invoiced</th>
-            <th className="px-2 py-1.5 text-right font-medium">Chart</th>
-            <th className="px-2 py-1.5 text-right font-medium whitespace-nowrap">Diff Amount</th>
-            <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Diff %</th>
+            <th className={`px-2 py-1.5 text-right font-medium ${SIDE.invoice.head}`}>Invoiced</th>
+            <th className={`px-2 py-1.5 text-right font-medium ${SIDE.chart.head}`}>Chart</th>
+            <th className={`px-2 py-1.5 text-right font-medium whitespace-nowrap ${SIDE.diff.head}`}>Diff Amount</th>
+            <th className={`px-3 py-1.5 text-right font-medium whitespace-nowrap ${SIDE.diff.head}`}>Diff %</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -94,10 +124,10 @@ function Breakdown({ title, rows, currency }: { title: string; rows: LabourRepor
             <tr key={b.key}>
               <td className="px-3 py-1.5">{b.key}</td>
               <td className="px-2 py-1.5 text-right tabular-nums">{b.lines.toLocaleString()}</td>
-              <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(b.invoiced)}</td>
-              <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(b.chart)}</td>
-              <td className="px-2 py-1.5 text-right"><Variance value={b.variance} /></td>
-              <td className="px-3 py-1.5 text-right"><VariancePct pct={variancePct(b.invoiced, b.chart)} /></td>
+              <td className={`px-2 py-1.5 text-right tabular-nums ${SIDE.invoice.cell}`}>{fmtNum(b.invoiced)}</td>
+              <td className={`px-2 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}>{fmtNum(b.chart)}</td>
+              <td className={`px-2 py-1.5 text-right ${SIDE.diff.cell}`}><Variance value={b.variance} /></td>
+              <td className={`px-3 py-1.5 text-right ${SIDE.diff.cell}`}><VariancePct pct={variancePct(b.invoiced, b.chart)} /></td>
             </tr>
           ))}
           {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-3 text-slate-500">Nothing to compare.</td></tr>}
@@ -146,6 +176,7 @@ export default function LabourVsChartPage() {
   const [jewNo, setJewNo] = useState('');
   const [bagNoInput, setBagNoInput] = useState('');
   const [bagNo, setBagNo] = useState('');
+  const [metalType, setMetalType] = useState(''); // '' = all metal types
   const [chartCode, setChartCode] = useState(''); // '' = the company's default chart
   const [status, setStatus] = useState<ReportStatusFilter>('ALL');
   const [sort, setSort] = useState<ReportSort>('variance');
@@ -154,6 +185,20 @@ export default function LabourVsChartPage() {
   const [pageInput, setPageInput] = useState('1');
   const [open, setOpen] = useState<number | null>(null);
   const [tableView, setTableView] = useState<TableView>('jobwork');
+  // Column choices per tab, remembered on this browser.
+  const lineColumns = useHiddenColumns('labour-vs-chart.columns.lines', LINES_COLUMNS);
+  const lotColumns = useHiddenColumns('labour-vs-chart.columns.lots', LOT_DETAIL_COLUMNS);
+  const jobWorkColumns = useHiddenColumns('labour-vs-chart.columns.jobwork.v2', JOB_WORK_COLUMNS);
+  const picker =
+    tableView === 'lines' ? { defs: LINES_COLUMNS, state: lineColumns }
+      : tableView === 'lots' ? { defs: LOT_DETAIL_COLUMNS, state: lotColumns }
+        : tableView === 'jobwork' ? { defs: JOB_WORK_COLUMNS, state: jobWorkColumns }
+          : null;
+  // Lines tab: which columns show, how wide each coloured band is, and where a band starts.
+  const show = (key: string) => !lineColumns.hidden.has(key);
+  const span = (g: keyof typeof LINES_GROUPS) => LINES_GROUPS[g].filter(show).length;
+  const edge = (g: keyof typeof LINES_GROUPS, key: string) => (LINES_GROUPS[g].find(show) === key ? 'border-l-2 border-white' : '');
+  const lineColumnCount = LINES_COLUMNS.filter((c) => show(c.key)).length;
   // The summary is folded away by default so the details come first; the choice is remembered on this browser.
   const [showSummary, setShowSummary] = useState(false);
   useEffect(() => {
@@ -187,7 +232,7 @@ export default function LabourVsChartPage() {
     return () => clearTimeout(t);
   }, [bagNoInput]);
 
-  const filterParams = { ...(chartCode ? { chart: chartCode } : {}), from, to, productType, ...(factory ? { factory } : {}), jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, status, sort };
+  const filterParams = { ...(chartCode ? { chart: chartCode } : {}), from, to, productType, ...(factory ? { factory } : {}), jobCategory, sku, ...(skuExact && sku ? { skuExact: '1' } : {}), invNo, jewNo, bagNo, ...(metalType ? { metalType } : {}), status, sort };
   const group = tableView === 'skus' ? 'sku' : 'line';
   const reportQuery = new URLSearchParams({ ...filterParams, group, page: String(page), size: String(pageSize) }).toString();
   const downloadUrl =
@@ -202,7 +247,7 @@ export default function LabourVsChartPage() {
   useEffect(() => {
     setPage(0);
     setOpen(null);
-  }, [companyId, chartCode, from, to, productType, factory, jobCategory, sku, skuExact, invNo, jewNo, bagNo, status, sort, pageSize, group]);
+  }, [companyId, chartCode, from, to, productType, factory, jobCategory, sku, skuExact, invNo, jewNo, bagNo, metalType, status, sort, pageSize, group]);
   useEffect(() => setPageInput(String(page + 1)), [page]);
   // Filters handed over in the address — the dashboard's drill-down links
   // (?from=&to=&jobCategory=&productType=&factory=&jewNo=&tab=). Read once;
@@ -218,6 +263,7 @@ export default function LabourVsChartPage() {
     if (q.get('chart')) setChartCode(q.get('chart')!);
     if (q.get('jewNo')) setJewNoInput(q.get('jewNo')!);
     if (q.get('invNo')) setInvNoInput(q.get('invNo')!);
+    if (isMetalType(q.get('metalType'))) setMetalType(q.get('metalType')!);
     const st = q.get('status');
     if (st && STATUS_FILTERS.some((x) => x.code === st)) setStatus(st as ReportStatusFilter);
     const tab = q.get('tab');
@@ -280,8 +326,9 @@ export default function LabourVsChartPage() {
     setTableView('lines');
   };
   const rowNoun = tableView === 'skus' ? 'SKUs' : 'lines';
-  const hasFilters = !!(from || to || productType || factory || skuInput || invNoInput || jewNoInput || bagNoInput || jobCategory !== DEFAULT_JOB_CATEGORY);
+  const hasFilters = !!(from || to || productType || factory || metalType || skuInput || invNoInput || jewNoInput || bagNoInput || jobCategory !== DEFAULT_JOB_CATEGORY);
   const clearFilters = () => {
+    setMetalType('');
     setFrom('');
     setTo('');
     setProductType('');
@@ -347,19 +394,19 @@ export default function LabourVsChartPage() {
             <div className="px-4 pb-4 pt-3 space-y-4 border-t border-slate-100">
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <Tile label="Total invoice labour" sub={`All labour on ${s.lines.toLocaleString()} lines, compared or not`}>
+                <Tile tone="invoice" label="Total invoice labour" sub={`All labour on ${s.lines.toLocaleString()} lines, compared or not`}>
                   {fmtNum(s.invoicedLabour)} <span className="text-sm font-normal text-slate-500">{currency}</span>
                 </Tile>
-                <Tile label="Invoiced labour (compared)" sub={`${s.comparable.toLocaleString()} of ${s.lines.toLocaleString()} lines comparable`}>
+                <Tile tone="invoice" label="Invoiced labour (compared)" sub={`${s.comparable.toLocaleString()} of ${s.lines.toLocaleString()} lines comparable`}>
                   {fmtNum(s.invoiced)} <span className="text-sm font-normal text-slate-500">{currency}</span>
                 </Tile>
-                <Tile label="Chart labour" sub={`Chart: ${data.chart.name}`}>
+                <Tile tone="chart" label="Chart labour" sub={`Chart: ${data.chart.name}`}>
                   {fmtNum(s.chart)} <span className="text-sm font-normal text-slate-500">{currency}</span>
                 </Tile>
-                <Tile label="Difference amount" sub="Invoiced − chart">
+                <Tile tone="diff" label="Difference amount" sub="Invoiced − chart">
                   <Variance value={s.variance} />
                 </Tile>
-                <Tile label="Difference %" sub="Of chart labour">
+                <Tile tone="diff" label="Difference %" sub="Of chart labour">
                   <VariancePct pct={s.variancePct} />
                 </Tile>
                 <Tile label="Lines" sub={`${s.partial.toLocaleString()} partly compared · ${s.possibleDoubleSetting.toLocaleString()} possible double setting`}>
@@ -371,12 +418,18 @@ export default function LabourVsChartPage() {
                 </Tile>
               </div>
 
-              <div className="grid lg:grid-cols-3 gap-4">
+              <div className="grid lg:grid-cols-2 2xl:grid-cols-4 gap-4">
                 <section className="bg-white rounded-xl border border-slate-200">
                   <header className="px-4 py-2.5 border-b border-slate-100"><h2 className="font-semibold text-slate-900 text-sm">Metal vs setting</h2></header>
                   <table className="w-full text-xs">
                     <thead className="text-slate-500 bg-slate-50">
-                      <tr><th className="px-4 py-1.5 text-left font-medium" /><th className="px-3 py-1.5 text-right font-medium">Invoiced</th><th className="px-3 py-1.5 text-right font-medium">Chart</th><th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Diff Amount</th><th className="px-4 py-1.5 text-right font-medium whitespace-nowrap">Diff %</th></tr>
+                      <tr>
+                        <th className="px-4 py-1.5 text-left font-medium" />
+                        <th className={`px-3 py-1.5 text-right font-medium ${SIDE.invoice.head}`}>Invoiced</th>
+                        <th className={`px-3 py-1.5 text-right font-medium ${SIDE.chart.head}`}>Chart</th>
+                        <th className={`px-3 py-1.5 text-right font-medium whitespace-nowrap ${SIDE.diff.head}`}>Diff Amount</th>
+                        <th className={`px-4 py-1.5 text-right font-medium whitespace-nowrap ${SIDE.diff.head}`}>Diff %</th>
+                      </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {[
@@ -386,10 +439,10 @@ export default function LabourVsChartPage() {
                       ].map(({ k, v }) => (
                         <tr key={k}>
                           <td className="px-4 py-1.5">{k}</td>
-                          <td className="px-3 py-1.5 text-right tabular-nums">{fmtNum(v.invoiced)}</td>
-                          <td className="px-3 py-1.5 text-right tabular-nums">{fmtNum(v.chart)}</td>
-                          <td className="px-3 py-1.5 text-right"><Variance value={v.invoiced - v.chart} /></td>
-                          <td className="px-4 py-1.5 text-right"><VariancePct pct={variancePct(v.invoiced, v.chart)} /></td>
+                          <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.invoice.cell}`}>{fmtNum(v.invoiced)}</td>
+                          <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}>{fmtNum(v.chart)}</td>
+                          <td className={`px-3 py-1.5 text-right ${SIDE.diff.cell}`}><Variance value={v.invoiced - v.chart} /></td>
+                          <td className={`px-4 py-1.5 text-right ${SIDE.diff.cell}`}><VariancePct pct={variancePct(v.invoiced, v.chart)} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -412,6 +465,7 @@ export default function LabourVsChartPage() {
                 </section>
                 <Breakdown title="By product type" rows={s.byProductType} currency={currency} />
                 <Breakdown title="By factory" rows={s.byFactory} currency={currency} />
+                <Breakdown title="By metal type" rows={s.byMetalType} currency={currency} />
               </div>
             </div>
           )}
@@ -435,7 +489,8 @@ export default function LabourVsChartPage() {
           <span className="text-xs text-slate-500">
             {hasFilters ? 'Filtered lines' : `${DEFAULT_JOB_CATEGORY} jobs`} of the selected company{data ? ` · chart: ${data.chart.name}` : ''} — filters apply to every tab and the summary
           </span>
-          <a href={downloadUrl} className="ml-auto px-3 py-1.5 rounded-lg text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1.5" title={tableView === 'skus' ? 'Every matching SKU as an Excel file' : 'Job Work Details and lot detail of every matching line as an Excel file'}>
+          <SideLegend className="ml-auto" />
+          <a href={downloadUrl} className="px-3 py-1.5 rounded-lg text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1.5" title={tableView === 'skus' ? 'Every matching SKU as an Excel file' : 'Job Work Details and lot detail of every matching line as an Excel file'}>
             <ArrowDownTrayIcon className="h-4 w-4" /> Excel
           </a>
           <a href={settingNotInChartUrl} className="px-3 py-1.5 rounded-lg text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1.5" title="Stones with no setting chart value, grouped by commodity, shape, setting type and ct range, as an Excel file (line status filter not applied)">
@@ -455,6 +510,12 @@ export default function LabourVsChartPage() {
             <select value={productType} onChange={(e) => setProductType(e.target.value)} className={`${inputClass} max-w-[14rem]`}>
               <option value="">All product types</option>
               {data?.productTypes.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Metal type</span>
+            <select value={metalType} onChange={(e) => setMetalType(e.target.value)} className={`${inputClass} max-w-[12rem]`} title="From the metal lots on each item: gold colour comes from the lot code (14KW, 14KY, 14KTT…)">
+              <option value="">All metal types</option>
+              {METAL_TYPES.map((t) => <option key={t.code} value={t.code}>{t.label}</option>)}
             </select>
           </label>
           <label className="text-sm"><span className="block text-xs text-slate-500 mb-1">Factory</span>
@@ -507,6 +568,7 @@ export default function LabourVsChartPage() {
               <option value="date">Newest invoice</option>
             </select>
           </label>
+          {picker && <ColumnPicker defs={picker.defs} state={picker.state} />}
         </div>
         {data && (
           <>
@@ -518,7 +580,7 @@ export default function LabourVsChartPage() {
               <div className={`overflow-x-auto ${lots.isFetching ? 'opacity-60' : ''}`}>
                 {lots.isError && <p className="px-4 py-3 text-sm text-red-600">{(lots.error as Error).message}</p>}
                 {lots.isLoading && <p className="px-4 py-3 text-sm text-slate-500">Loading lot detail…</p>}
-                {lots.data && <LotDetailTable groups={lots.data.groups} />}
+                {lots.data && <LotDetailTable groups={lots.data.groups} hidden={lotColumns.hidden} />}
               </div>
             ) : tableView === 'jobwork' ? (
               <div className={`overflow-x-auto p-2 ${lots.isFetching ? 'opacity-60' : ''}`}>
@@ -530,7 +592,7 @@ export default function LabourVsChartPage() {
                       <span className="inline-block h-3 w-5 rounded-sm border border-slate-300 bg-amber-100" />
                       Chart or invoice amount missing — that jewellery&apos;s difference is not like for like; see Remarks.
                     </p>
-                    <JobWorkTable groups={lots.data.groups} startIndex={page * pageSize} pageOnly={lots.data.totalLines > lots.data.groups.length} />
+                    <JobWorkTable groups={lots.data.groups} startIndex={page * pageSize} pageOnly={lots.data.totalLines > lots.data.groups.length} hidden={jobWorkColumns.hidden} />
                   </>
                 )}
               </div>
@@ -539,19 +601,27 @@ export default function LabourVsChartPage() {
               <table className="min-w-full text-sm">
                 <thead className="text-slate-500 bg-slate-50">
                   <tr>
-                    <th className="pl-4 pr-1 py-1.5 w-6" />
-                    <th className="px-3 py-1.5 text-left font-medium">Invoice</th>
-                    <th className="px-3 py-1.5 text-left font-medium">Jewellery</th>
-                    <th className="px-3 py-1.5 text-left font-medium">Product type</th>
-                    <th className="px-3 py-1.5 text-right font-medium">Qty</th>
-                    <th className="px-3 py-1.5 text-right font-medium">g/pc</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Metal inv / chart</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Setting inv / chart</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap" title="All labour on the line; below it, the part compared with the chart">Invoice labour</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Chart labour</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Diff Amount</th>
-                    <th className="px-3 py-1.5 text-right font-medium whitespace-nowrap">Diff %</th>
-                    <th className="px-4 py-1.5 text-left font-medium">Status</th>
+                    <th className="pl-4 pr-1 py-1.5 w-6" rowSpan={2} />
+                    {show('invoice') && <th className="px-3 py-1.5 text-left font-medium" rowSpan={2}>Invoice</th>}
+                    {show('jewellery') && <th className="px-3 py-1.5 text-left font-medium" rowSpan={2}>Jewellery</th>}
+                    {show('metalType') && <th className="px-3 py-1.5 text-left font-medium whitespace-nowrap" rowSpan={2}>Metal type</th>}
+                    {show('productType') && <th className="px-3 py-1.5 text-left font-medium" rowSpan={2}>Product type</th>}
+                    {show('qty') && <th className="px-3 py-1.5 text-right font-medium" rowSpan={2}>Qty</th>}
+                    {show('gpc') && <th className="px-3 py-1.5 text-right font-medium" rowSpan={2}>g/pc</th>}
+                    {span('inv') > 0 && <th colSpan={span('inv')} className={`px-3 py-1 text-center font-semibold border-l-2 border-white ${SIDE.invoice.head}`}>Invoice labour</th>}
+                    {span('chart') > 0 && <th colSpan={span('chart')} className={`px-3 py-1 text-center font-semibold border-l-2 border-white ${SIDE.chart.head}`}>Chart labour</th>}
+                    {span('diff') > 0 && <th colSpan={span('diff')} className={`px-3 py-1 text-center font-semibold border-l-2 border-white ${SIDE.diff.head}`}>Difference</th>}
+                    {show('status') && <th className="px-4 py-1.5 text-left font-medium" rowSpan={2}>Status</th>}
+                  </tr>
+                  <tr>
+                    {show('invMetal') && <th className={`px-3 py-1 text-right font-medium ${SIDE.invoice.head} ${edge('inv', 'invMetal')}`}>Metal</th>}
+                    {show('invSetting') && <th className={`px-3 py-1 text-right font-medium ${SIDE.invoice.head} ${edge('inv', 'invSetting')}`}>Setting</th>}
+                    {show('invTotal') && <th className={`px-3 py-1 text-right font-medium ${SIDE.invoice.head} ${edge('inv', 'invTotal')}`} title="All labour on the line; below it, the part compared with the chart">Total</th>}
+                    {show('chartMetal') && <th className={`px-3 py-1 text-right font-medium ${SIDE.chart.head} ${edge('chart', 'chartMetal')}`}>Metal</th>}
+                    {show('chartSetting') && <th className={`px-3 py-1 text-right font-medium ${SIDE.chart.head} ${edge('chart', 'chartSetting')}`}>Setting</th>}
+                    {show('chartTotal') && <th className={`px-3 py-1 text-right font-medium ${SIDE.chart.head} ${edge('chart', 'chartTotal')}`}>Total</th>}
+                    {show('diff') && <th className={`px-3 py-1 text-right font-medium ${SIDE.diff.head} ${edge('diff', 'diff')}`}>Amount</th>}
+                    {show('diffPct') && <th className={`px-3 py-1 text-right font-medium ${SIDE.diff.head} ${edge('diff', 'diffPct')}`}>%</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -561,30 +631,43 @@ export default function LabourVsChartPage() {
                       <Fragment key={r.invDetId}>
                         <tr onClick={() => setOpen(isOpen ? null : r.invDetId)} className="border-t border-slate-100 cursor-pointer hover:bg-amber-50/50">
                           <td className="pl-4 pr-1 py-2 text-slate-400">{isOpen ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}</td>
-                          <td className="px-3 py-2 whitespace-nowrap">
-                            <Link href={`/dashboard/factory-invoices/${r.invId}`} onClick={(e) => e.stopPropagation()} className="font-medium text-amber-700 hover:underline">{r.invNo}</Link>
-                            <span className="block text-xs text-slate-500">{fmtDate(r.invDt)} · {r.factoryName}</span>
-                          </td>
-                          <td className="px-3 py-2">{r.jewNo}{r.bagNo && <span className="block text-xs text-slate-500">Bag {r.bagNo}</span>}{r.skuNo &&<span className="block text-xs text-slate-500">{r.skuNo}</span>}</td>
-                          <td className="px-3 py-2">{r.productType ?? '—'}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.qty, 0)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{r.gramsPerPiece != null ? fmtNum(r.gramsPerPiece, 3) : '—'}</td>
-                          <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-                            {r.metalChart > 0 ? <>{fmtNum(r.metalInvoiced)} / <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.metalChart} pick={(c) => c.metal} currency={currency} /></> : '—'}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-                            {r.settingChart > 0 ? <>{fmtNum(r.settingInvoiced)} / <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.settingChart} pick={(c) => c.setting} currency={currency} /></> : '—'}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-                            {fmtNum(r.invoicedLabour)}
-                            {r.status !== 'NOT_COMPARABLE' && r.invoicedCompared !== r.invoicedLabour && <span className="block text-xs text-slate-500">{fmtNum(r.invoicedCompared)} compared</span>}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums">
-                            {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.chartTotal} pick={(c) => c.total} currency={currency} />}
-                          </td>
-                          <td className="px-3 py-2 text-right">{r.status === 'NOT_COMPARABLE' ? '—' : <Variance value={r.variance} />}</td>
-                          <td className="px-3 py-2 text-right">{r.status === 'NOT_COMPARABLE' ? '—' : <VariancePct pct={r.variancePct} />}</td>
-                          <td className="px-4 py-2">
+                          {show('invoice') && (
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <Link href={`/dashboard/factory-invoices/${r.invId}`} onClick={(e) => e.stopPropagation()} className="font-medium text-amber-700 hover:underline">{r.invNo}</Link>
+                              <span className="block text-xs text-slate-500">{fmtDate(r.invDt)} · {r.factoryName}</span>
+                            </td>
+                          )}
+                          {show('jewellery') && <td className="px-3 py-2">{r.jewNo}{r.bagNo && <span className="block text-xs text-slate-500">Bag {r.bagNo}</span>}{r.skuNo &&<span className="block text-xs text-slate-500">{r.skuNo}</span>}</td>}
+                          {show('metalType') && <td className="px-3 py-2 whitespace-nowrap">{metalTypeLabel(r.metalType)}</td>}
+                          {show('productType') && <td className="px-3 py-2">{r.productType ?? '—'}</td>}
+                          {show('qty') && <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.qty, 0)}</td>}
+                          {show('gpc') && <td className="px-3 py-2 text-right tabular-nums">{r.gramsPerPiece != null ? fmtNum(r.gramsPerPiece, 3) : '—'}</td>}
+                          {show('invMetal') && <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.invoice.cell} ${edge('inv', 'invMetal')}`}>{r.metalChart > 0 ? fmtNum(r.metalInvoiced) : '—'}</td>}
+                          {show('invSetting') && <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.invoice.cell} ${edge('inv', 'invSetting')}`}>{r.settingChart > 0 ? fmtNum(r.settingInvoiced) : '—'}</td>}
+                          {show('invTotal') && (
+                            <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap font-medium ${SIDE.invoice.cell} ${edge('inv', 'invTotal')}`}>
+                              {fmtNum(r.invoicedLabour)}
+                              {r.status !== 'NOT_COMPARABLE' && r.invoicedCompared !== r.invoicedLabour && <span className="block text-xs font-normal text-slate-500">{fmtNum(r.invoicedCompared)} compared</span>}
+                            </td>
+                          )}
+                          {show('chartMetal') && (
+                            <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.chart.cell} ${edge('chart', 'chartMetal')}`}>
+                              {r.metalChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.metalChart} pick={(c) => c.metal} currency={currency} /> : '—'}
+                            </td>
+                          )}
+                          {show('chartSetting') && (
+                            <td className={`px-3 py-2 text-right tabular-nums whitespace-nowrap ${SIDE.chart.cell} ${edge('chart', 'chartSetting')}`}>
+                              {r.settingChart > 0 ? <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.settingChart} pick={(c) => c.setting} currency={currency} /> : '—'}
+                            </td>
+                          )}
+                          {show('chartTotal') && (
+                            <td className={`px-3 py-2 text-right tabular-nums font-medium ${SIDE.chart.cell} ${edge('chart', 'chartTotal')}`}>
+                              {r.status === 'NOT_COMPARABLE' ? '—' : <LineChartAmount invDetId={r.invDetId} chart={data.chart.code} value={r.chartTotal} pick={(c) => c.total} currency={currency} />}
+                            </td>
+                          )}
+                          {show('diff') && <td className={`px-3 py-2 text-right ${SIDE.diff.cell} ${edge('diff', 'diff')}`}>{r.status === 'NOT_COMPARABLE' ? '—' : <Variance value={r.variance} />}</td>}
+                          {show('diffPct') && <td className={`px-3 py-2 text-right ${SIDE.diff.cell} ${edge('diff', 'diffPct')}`}>{r.status === 'NOT_COMPARABLE' ? '—' : <VariancePct pct={r.variancePct} />}</td>}
+                          {show('status') && <td className="px-4 py-2">
                             <StatusLabel status={r.status} />
                             {r.status === 'NOT_COMPARABLE' && r.issue && <span className="block text-xs text-slate-500">{REASON_TEXT[r.issue] ?? r.issue}</span>}
                             {r.partial && r.status !== 'NOT_COMPARABLE' && <span className="block text-xs text-amber-800">Partly compared</span>}
@@ -594,18 +677,18 @@ export default function LabourVsChartPage() {
                                 Component setting {fmtNum(r.componentSettingNotCounted)} not counted
                               </span>
                             )}
-                          </td>
+                          </td>}
                         </tr>
                         {isOpen && (
                           <tr className="bg-slate-50/70">
                             <td />
-                            <td colSpan={12} className="px-3 py-3"><LineDrilldown invDetId={r.invDetId} chart={data.chart.code} currency={currency} /></td>
+                            <td colSpan={Math.max(1, lineColumnCount)} className="px-3 py-3"><LineDrilldown invDetId={r.invDetId} chart={data.chart.code} currency={currency} /></td>
                           </tr>
                         )}
                       </Fragment>
                     );
                   })}
-                  {data.rows.length === 0 && <tr><td colSpan={13} className="px-4 py-6 text-center text-slate-500">No lines match.</td></tr>}
+                  {data.rows.length === 0 && <tr><td colSpan={lineColumnCount + 1} className="px-4 py-6 text-center text-slate-500">No lines match.</td></tr>}
                 </tbody>
               </table>
             </div>

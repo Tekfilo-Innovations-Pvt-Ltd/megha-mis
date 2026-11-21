@@ -131,7 +131,7 @@ describe('buildLabourBreakup', () => {
 const group = (labour: LotGroup['labour'], rows: LotRow[], stoneSettingInvoiced = 0): LotGroup => ({
   line: {
     invDetId: 1, invId: 1, invNo: 'JW-1', invDt: '2026-01-01', factoryName: 'F', jewNo: 'J800600', skuNo: 'S', soNo: 'SO-1', bagNo: 'B1', componentSettingNotCounted: 0, size: 'US7',
-    jobCategory: 'Normal', productType: 'RING', qty: 12, grossWt: 5.594, grossWtCalculated: false, netWt: 3.16, diamondWt: 2.392, colorStoneWt: 9.78,
+    jobCategory: 'Normal', metalType: 'GOLD', productType: 'RING', qty: 12, grossWt: 5.594, grossWtCalculated: false, netWt: 3.16, diamondWt: 2.392, colorStoneWt: 9.78,
     metals: [{ commodity: 'GOLD', lotCode: '14KW', grams: 3.16 }],
   },
   rows,

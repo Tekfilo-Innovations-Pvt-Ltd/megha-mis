@@ -11,6 +11,7 @@ import {
 } from '@/lib/labourComparison';
 import type { LineInfo } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
+import type { MetalType } from '@/lib/metalType';
 import { correctionText } from '@/lib/stoneCorrections';
 import { chargePart, chartCalc, combinedCalc, stonePart, sumCalcs, type ChartCalc, type ChartCalcPart } from '@/lib/chartCalc';
 
@@ -50,6 +51,7 @@ export interface LotLine {
   netWt: number; // metal, grams (consumed)
   diamondWt: number; // carats (consumed)
   colorStoneWt: number; // carats (consumed)
+  metalType: MetalType; // Gold, Gold 2 Tone, Silver… (src/lib/metalType.ts)
   metals: { commodity: string; lotCode: string | null; grams: number }[]; // metal lots, consumed grams
 }
 
@@ -347,6 +349,7 @@ export function buildLotGroup(info: LineInfo, input: LineInput, c: LineCompariso
     componentSettingNotCounted: info.componentSettingNotCounted,
     size: info.size,
     jobCategory: info.jobCategory,
+    metalType: info.metalType,
     productType: input.productType,
     qty: input.qty,
     grossWt: info.grossWt ?? r4(netWt + (diamondWt + colorStoneWt) / 5),

@@ -1,3 +1,4 @@
+import { isMetalType, type MetalType } from '@/lib/metalType';
 import { NextRequest, NextResponse } from 'next/server';
 import { factoryInvoiceTotals } from '@/lib/factoryInvoice';
 import { getSessionCompanyId } from '@/lib/company';
@@ -5,7 +6,7 @@ import { resolveComparison } from '@/lib/labourReportParams';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/factory-invoices/totals?search=&invNo=&jewNo= — invoice and chart labour of
+// GET /api/factory-invoices/totals?search=&invNo=&jewNo=&metalType= — invoice and chart labour of
 // every matching invoice (optional: chart=&settingType=&tolerance=).
 export async function GET(request: NextRequest) {
   const companyId = await getSessionCompanyId();
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
       search: params.get('search') ?? undefined,
       invNo: params.get('invNo') ?? undefined,
       jewNo: params.get('jewNo') ?? undefined,
+      metalType: isMetalType(params.get('metalType')) ? (params.get('metalType') as MetalType) : undefined,
     },
     resolved.chart,
     resolved.options,

@@ -2,6 +2,7 @@ import erp from '@/lib/erp';
 import { compareLine, type ComparisonOptions } from '@/lib/labourComparison';
 import { loadComparisonLines } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
+import { METAL_TYPES, metalTypeOf, type MetalType } from '@/lib/metalType';
 
 // Factory invoice, read from the ERP and reshaped into third normal form.
 //
@@ -249,19 +250,52 @@ export interface FactoryInvoiceFilter {
   search?: string; // invoice no, reference, export invoice no or factory
   invNo?: string; // part of the invoice number as shown, e.g. JW-800016
   jewNo?: string; // part of a jewellery number on any of the invoice's lines
+  metalType?: MetalType; // invoices with at least one line of this metal type
+}
+
+// Invoices with a line of the given metal type. The type is worked out from
+// each line's metal lots (src/lib/metalType.ts), so it can't be a SQL filter.
+async function invoiceIdsWithMetalType(companyId: number, metalType: MetalType): Promise<number[]> {
+  const rows = await erp.$queryRaw<{ inv_id: number; inv_det_id: number; commodity: string; lot_code: string }[]>`
+    SELECT d.inv_id, d.inv_det_id, co.commodity_name AS commodity, l.lot_code
+      FROM tbl_factory_invoice_main m
+      JOIN tbl_factory_invoice_det d ON d.inv_id = m.inv_id
+      JOIN tbl_factory_invoice_component c ON c.inv_det_id = d.inv_det_id
+      JOIN tbl_lot l ON l.lot_id = c.lot_id
+      JOIN tbl_commodity co ON co.commodity_id = l.commodity_id
+     WHERE m.company_id = ${companyId} AND m.is_deleted = 0 AND d.is_deleted = 0 AND c.is_deleted = 0
+       AND l.lot_type = 'METAL'`;
+  const lines = new Map<number, { invId: number; lots: { commodity: string; lotCode: string }[] }>();
+  for (const r of rows) {
+    const line = lines.get(r.inv_det_id) ?? { invId: r.inv_id, lots: [] };
+    line.lots.push({ commodity: r.commodity, lotCode: r.lot_code });
+    lines.set(r.inv_det_id, line);
+  }
+  const ids = new Set<number>();
+  for (const line of Array.from(lines.values())) if (metalTypeOf(line.lots) === metalType) ids.add(line.invId);
+  return Array.from(ids);
 }
 
 // Invoices whose shown number / any line's jewellery number contains the text —
-// both are concatenations Prisma can't filter on. null when neither is set.
+// both are concatenations Prisma can't filter on — and that have a line of the
+// metal type. null when none of these is set.
 async function matchingInvoiceIds(filter: FactoryInvoiceFilter): Promise<number[] | null> {
   const invNo = filter.invNo?.trim();
   const jewNo = filter.jewNo?.trim();
-  if (!invNo && !jewNo) return null;
+  const byMetal = filter.metalType ? await invoiceIdsWithMetalType(filter.companyId, filter.metalType) : null;
+  if (!invNo && !jewNo) return byMetal;
+  const ids = await invoiceIdsByNumber(filter.companyId, invNo, jewNo);
+  if (!byMetal) return ids;
+  const metalIds = new Set(byMetal);
+  return ids.filter((id) => metalIds.has(id));
+}
+
+async function invoiceIdsByNumber(companyId: number, invNo: string | undefined, jewNo: string | undefined): Promise<number[]> {
   const like = (s: string | undefined) => (s ? `%${s.replace(/[\\%_]/g, '\\$&')}%` : null);
   const rows = await erp.$queryRaw<{ inv_id: number }[]>`
     SELECT m.inv_id
       FROM tbl_factory_invoice_main m
-     WHERE m.company_id = ${filter.companyId} AND m.is_deleted = 0
+     WHERE m.company_id = ${companyId} AND m.is_deleted = 0
        AND (${like(invNo)}::text IS NULL OR (m.inv_type || '-' || m.inv_no) ILIKE ${like(invNo)})
        AND (${like(jewNo)}::text IS NULL OR EXISTS (
              SELECT 1 FROM tbl_factory_invoice_det d JOIN tbl_jewellery j ON j.jew_id = d.jew_id
@@ -292,14 +326,15 @@ async function invoiceWhere(filter: FactoryInvoiceFilter) {
 // Invoice labour of the given invoices compared with a price chart: per invoice,
 // the chart labour of its comparable lines and the invoiced labour it is set against.
 export async function chartLabourByInvoice(companyId: number, invIds: number[], chart: PriceChart, options: ComparisonOptions) {
-  const byInvoice = new Map<number, { invoicedCompared: number; chart: number; lines: number; comparableLines: number }>();
+  const byInvoice = new Map<number, { invoicedCompared: number; chart: number; lines: number; comparableLines: number; metalTypes: Set<MetalType> }>();
   if (invIds.length === 0) return byInvoice;
   const { info, lines } = await loadComparisonLines({ companyId, invIds });
   for (const line of lines) {
-    const invId = info.get(line.invDetId)!.invId;
+    const { invId, metalType } = info.get(line.invDetId)!;
     const c = compareLine(line, chart, options);
-    const t = byInvoice.get(invId) ?? { invoicedCompared: 0, chart: 0, lines: 0, comparableLines: 0 };
+    const t = byInvoice.get(invId) ?? { invoicedCompared: 0, chart: 0, lines: 0, comparableLines: 0, metalTypes: new Set<MetalType>() };
     t.lines += 1;
+    t.metalTypes.add(metalType);
     if (c.status !== 'NOT_COMPARABLE') {
       t.comparableLines += 1;
       t.invoicedCompared += c.invoicedCompared;
@@ -387,6 +422,8 @@ export async function listFactoryInvoices(
       invoicedCompared: c?.comparableLines ? r2(c.invoicedCompared) : null,
       chartLabour: c?.comparableLines ? r2(c.chart) : null,
       comparableLines: c?.comparableLines ?? 0,
+      // Metal types of the invoice's lines, in the usual order (most invoices have one).
+      metalTypes: c ? METAL_TYPES.map((t) => t.code).filter((t) => c.metalTypes.has(t)) : [],
       };
     }),
     totalElements: total,

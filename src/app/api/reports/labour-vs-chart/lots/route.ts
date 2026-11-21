@@ -1,3 +1,4 @@
+import { isMetalType, type MetalType } from '@/lib/metalType';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCompanyId } from '@/lib/company';
 import { buildLotReport, type ReportSort, type ReportStatusFilter } from '@/lib/labourReport';
@@ -11,7 +12,7 @@ export const maxDuration = 60;
 const STATUSES: ReportStatusFilter[] = ['ALL', 'IN_LINE', 'OVER', 'UNDER', 'NOT_COMPARABLE', 'PARTIAL', 'DOUBLE_SETTING'];
 const SORTS: ReportSort[] = ['variance', 'variancePct', 'date'];
 
-// GET /api/reports/labour-vs-chart/lots?from=&to=&productType=&jobCategory=&sku=&invNo=&jewNo=&bagNo=&status=&sort=&page=&size=
+// GET /api/reports/labour-vs-chart/lots?from=&to=&productType=&jobCategory=&sku=&invNo=&jewNo=&bagNo=&metalType=&status=&sort=&page=&size=
 //     &format=xlsx   → every matching line as an Excel download (page/size ignored)
 // Lot detail of the labour-vs-chart report: per invoice line, one row per
 // metal charge / stone lot with invoice and chart labour rate and amount.
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
       invNo: p.get('invNo')?.trim() || undefined,
       jewNo: p.get('jewNo')?.trim() || undefined,
       bagNo: p.get('bagNo')?.trim() || undefined,
+      metalType: isMetalType(p.get('metalType')) ? (p.get('metalType') as MetalType) : undefined,
     },
     resolved.chart,
     resolved.options,

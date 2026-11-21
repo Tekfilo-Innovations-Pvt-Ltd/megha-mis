@@ -2,6 +2,7 @@ import erp from '@/lib/erp';
 import type { LineInput, StoneInput } from '@/lib/labourComparison';
 import { applyStoneCorrections } from '@/lib/stoneCorrections';
 import { getStoneCorrections } from '@/lib/stoneCorrectionsStore';
+import { metalTypeOf, type MetalType } from '@/lib/metalType';
 
 // Loads factory-invoice lines in the shape src/lib/labourComparison.ts needs,
 // in four set-based queries (lines, metal, labour, stones) rather than one per
@@ -24,6 +25,7 @@ export interface LineFilter {
   invIds?: number[];
   invDetId?: number;
   erpStoneDetails?: boolean; // ignore the customer's stone corrections — shape / MM size as in the ERP
+  metalType?: MetalType; // only lines of this metal type (src/lib/metalType.ts)
 }
 
 export interface LineInfo {
@@ -41,6 +43,7 @@ export interface LineInfo {
   jobCategory: string | null; // tbl_jewellery.job_category: Normal, Repair, QC Repair
   grossWt: number | null; // as recorded on the line (physical, else invoiced); null when neither is
   componentSettingNotCounted: number; // setting_amount on the stone components left out because the labour table has a setting row; 0 normally
+  metalType: MetalType; // Gold, Gold 2 Tone, Silver… from the metal lots consumed
 }
 
 // Labour rows that are stone setting only (not combined rows like "CPF+ Setting + Rhodium").
@@ -59,7 +62,16 @@ const CACHE_MAX = 6; // whole-company loads are tens of MB each
 const cache = new Map<string, { at: number; value: Promise<LoadedLines> }>();
 
 // Every filter is optional — with none, all lines of the company are loaded.
+// The metal type is worked out from the loaded lots, so it filters the cached
+// load rather than starting a new ERP query per type.
 export async function loadComparisonLines(filter: LineFilter): Promise<LoadedLines> {
+  const { metalType, ...rest } = filter;
+  const loaded = await loadCached(rest);
+  if (!metalType) return loaded;
+  return { info: loaded.info, lines: loaded.lines.filter((l) => loaded.info.get(l.invDetId)?.metalType === metalType) };
+}
+
+async function loadCached(filter: LineFilter): Promise<LoadedLines> {
   const corrections = filter.erpStoneDetails ? null : await getStoneCorrections(filter.companyId);
   // Sorted keys, so the same filter written in another order shares an entry.
   const key = `${JSON.stringify(filter, Object.keys(filter).sort())}|${corrections?.uploadedAt ?? ''}`;
@@ -159,13 +171,16 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
 
   const [metal, labour, stones] = await Promise.all([
     // Net weight is the consumed quantity; total_qty1 also counts the loss.
-    erp.$queryRaw<{ inv_det_id: number; lot_code: string; commodity: string; grams: number }[]>`
-      SELECT c.inv_det_id, l.lot_code, upper(trim(co.commodity_name)) AS commodity, sum(c.consumed_qty1)::float8 AS grams
+    // Every metal lot is read so the metal type sees them all (some gold is
+    // issued in PCS), but only lots issued in grams are metal weight.
+    erp.$queryRaw<{ inv_det_id: number; lot_code: string; commodity: string; grams: number; in_grams: boolean }[]>`
+      SELECT c.inv_det_id, l.lot_code, upper(trim(co.commodity_name)) AS commodity,
+             coalesce(sum(c.consumed_qty1) FILTER (WHERE upper(trim(c.uom1)) IN ('GM', 'GMS', 'G', 'GRAM')), 0)::float8 AS grams,
+             bool_or(upper(trim(c.uom1)) IN ('GM', 'GMS', 'G', 'GRAM')) AS in_grams
         FROM tbl_factory_invoice_component c
         JOIN tbl_lot l ON l.lot_id = c.lot_id
         JOIN tbl_commodity co ON co.commodity_id = l.commodity_id
-       WHERE c.inv_det_id = ANY(${ids}) AND c.is_deleted = 0
-         AND l.lot_type = 'METAL' AND upper(trim(c.uom1)) IN ('GM', 'GMS', 'G', 'GRAM')
+       WHERE c.inv_det_id = ANY(${ids}) AND c.is_deleted = 0 AND l.lot_type = 'METAL'
        GROUP BY 1, 2, 3
        ORDER BY 1, min(c.component_id)`,
     erp.$queryRaw<{ inv_det_id: number; process: string; amount: number; qty: number; description: string | null }[]>`
@@ -235,6 +250,7 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
     );
     const lineLabour = labourBy.get(r.inv_det_id) ?? [];
     const settingInLabour = lineLabour.some((l) => l.amount !== 0 && SETTING_ROW.test(l.process.trim()));
+    const lineMetal = metalBy.get(r.inv_det_id) ?? [];
     const componentSettingNotCounted = settingInLabour ? lineStones.reduce((sum, s) => sum + (s.setting_amount ?? 0), 0) : 0;
     info.set(r.inv_det_id, {
       invDetId: r.inv_det_id,
@@ -251,13 +267,14 @@ async function loadUncached(filter: LineFilter): Promise<LoadedLines> {
       jobCategory: r.job_category,
       grossWt: r.gross_wt,
       componentSettingNotCounted: Math.round(componentSettingNotCounted * 100) / 100,
+      metalType: metalTypeOf(lineMetal.map((m) => ({ commodity: m.commodity, lotCode: m.lot_code }))),
     });
     return {
       invDetId: r.inv_det_id,
       qty: r.qty,
       productType: r.product_type,
       currency: r.currency,
-      metal: (metalBy.get(r.inv_det_id) ?? []).map((m) => ({ commodity: m.commodity, grams: m.grams, lotCode: m.lot_code })),
+      metal: lineMetal.filter((m) => m.in_grams).map((m) => ({ commodity: m.commodity, grams: m.grams, lotCode: m.lot_code })),
       labour: lineLabour.map((l) => ({ process: l.process, amount: l.amount, qty: l.qty, description: l.description })),
       stones: lineStones.map(
         (s): StoneInput => ({

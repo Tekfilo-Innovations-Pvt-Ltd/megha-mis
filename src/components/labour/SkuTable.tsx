@@ -5,6 +5,7 @@ import { fmtDate, fmtNum } from '@/lib/format';
 import { Variance, VariancePct } from '@/components/labour/LineComparisonDetail';
 import ChartAmount from '@/components/labour/ChartAmount';
 import { chartCalc } from '@/lib/chartCalc';
+import { SIDE } from '@/components/labour/sides';
 
 // A SKU's chart amount is its comparable lines' chart labour added up; the
 // per-line working is on the Lines tab (click the SKU to open its lines).
@@ -51,12 +52,12 @@ export default function SkuTable({ skus, onOpenSku }: { skus: SkuRow[]; onOpenSk
           <th className={`${th} text-right`}>Invoices</th>
           <th className={`${th} text-right`}>Lines</th>
           <th className={`${th} text-right`} title="Pieces on the comparable lines">Qty</th>
-          <th className={`${th} text-right`}>Inv / pc</th>
-          <th className={`${th} text-right`}>Chart / pc</th>
-          <th className={`${th} text-right`}>Invoiced</th>
-          <th className={`${th} text-right`}>Chart</th>
-          <th className={`${th} text-right`}>Diff Amount</th>
-          <th className={`${th} pr-4 text-right`}>Diff %</th>
+          <th className={`${th} text-right ${SIDE.invoice.head}`}>Inv / pc</th>
+          <th className={`${th} text-right ${SIDE.chart.head}`}>Chart / pc</th>
+          <th className={`${th} text-right ${SIDE.invoice.head}`}>Invoiced</th>
+          <th className={`${th} text-right ${SIDE.chart.head}`}>Chart</th>
+          <th className={`${th} text-right ${SIDE.diff.head}`}>Diff Amount</th>
+          <th className={`${th} pr-4 text-right ${SIDE.diff.head}`}>Diff %</th>
         </tr>
       </thead>
       <tbody>
@@ -86,12 +87,12 @@ export default function SkuTable({ skus, onOpenSku }: { skus: SkuRow[]; onOpenSk
               </span>
             </td>
             <td className={td}>{fmtNum(s.qty, 0)}</td>
-            <td className={td}>{s.invoicedPerPc == null ? '—' : fmtNum(s.invoicedPerPc)}</td>
-            <td className={td}><ChartAmount value={s.chartPerPc} calc={perPcCalc(s)} empty="—" /></td>
-            <td className={td}>{s.comparableLines ? fmtNum(s.invoiced) : '—'}</td>
-            <td className={td}>{s.comparableLines ? <ChartAmount value={s.chart} calc={skuCalc(s)} /> : '—'}</td>
-            <td className={td}>{s.comparableLines ? <Variance value={s.variance} /> : '—'}</td>
-            <td className={`${td} pr-4`}>{s.comparableLines ? <VariancePct pct={s.variancePct} /> : '—'}</td>
+            <td className={`${td} ${SIDE.invoice.cell}`}>{s.invoicedPerPc == null ? '—' : fmtNum(s.invoicedPerPc)}</td>
+            <td className={`${td} ${SIDE.chart.cell}`}><ChartAmount value={s.chartPerPc} calc={perPcCalc(s)} empty="—" /></td>
+            <td className={`${td} ${SIDE.invoice.cell}`}>{s.comparableLines ? fmtNum(s.invoiced) : '—'}</td>
+            <td className={`${td} ${SIDE.chart.cell}`}>{s.comparableLines ? <ChartAmount value={s.chart} calc={skuCalc(s)} /> : '—'}</td>
+            <td className={`${td} ${SIDE.diff.cell}`}>{s.comparableLines ? <Variance value={s.variance} /> : '—'}</td>
+            <td className={`${td} pr-4 ${SIDE.diff.cell}`}>{s.comparableLines ? <VariancePct pct={s.variancePct} /> : '—'}</td>
           </tr>
         ))}
         {skus.length === 0 && <tr><td colSpan={11} className="px-4 py-6 text-center text-slate-500">No SKUs match.</td></tr>}

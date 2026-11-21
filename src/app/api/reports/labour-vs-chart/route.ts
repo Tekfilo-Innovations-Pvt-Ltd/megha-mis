@@ -1,3 +1,4 @@
+import { isMetalType, type MetalType } from '@/lib/metalType';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCompanyId } from '@/lib/company';
 import { buildLabourReport, type ReportGroup, type ReportSort, type ReportStatusFilter } from '@/lib/labourReport';
@@ -11,7 +12,7 @@ export const maxDuration = 60;
 const STATUSES: ReportStatusFilter[] = ['ALL', 'IN_LINE', 'OVER', 'UNDER', 'NOT_COMPARABLE', 'PARTIAL', 'DOUBLE_SETTING'];
 const SORTS: ReportSort[] = ['variance', 'variancePct', 'date'];
 
-// GET /api/reports/labour-vs-chart?from=&to=&productType=&jobCategory=&sku=&invNo=&jewNo=&bagNo=&skuExact=1&status=&sort=&page=&size=
+// GET /api/reports/labour-vs-chart?from=&to=&productType=&jobCategory=&sku=&invNo=&jewNo=&bagNo=&metalType=&skuExact=1&status=&sort=&page=&size=
 //     &group=sku               → a page of SKUs (lines added up) instead of lines
 //     &group=sku&format=xlsx   → every SKU as an Excel download
 // (optional: chart=&settingType=&tolerance=, default newest chart / Prong/Pave / 5%)
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
       invNo: p.get('invNo')?.trim() || undefined,
       jewNo: p.get('jewNo')?.trim() || undefined,
       bagNo: p.get('bagNo')?.trim() || undefined,
+      metalType: isMetalType(p.get('metalType')) ? (p.get('metalType') as MetalType) : undefined,
     },
     resolved.chart,
     resolved.options,

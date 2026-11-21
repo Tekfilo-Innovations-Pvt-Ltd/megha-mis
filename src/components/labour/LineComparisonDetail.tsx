@@ -12,6 +12,7 @@ import {
 import { fmtNum } from '@/lib/format';
 import type { LineCalcs } from '@/lib/chartCalc';
 import ChartAmount from '@/components/labour/ChartAmount';
+import { SIDE } from '@/components/labour/sides';
 
 // Status is carried by icon + word, never colour alone.
 const STATUS_META: Record<LineStatus, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
@@ -64,8 +65,8 @@ const SETTING_TYPE_NAMES: Record<string, string> = {
   PRESSURE: 'Pressure',
 };
 
-function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
-  return <th className={`px-3 py-1.5 font-medium whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}>{children}</th>;
+function Th({ children, right, side }: { children: React.ReactNode; right?: boolean; side?: keyof typeof SIDE }) {
+  return <th className={`px-3 py-1.5 font-medium whitespace-nowrap ${right ? 'text-right' : 'text-left'} ${side ? SIDE[side].head : ''}`}>{children}</th>;
 }
 
 // Metal charges, every stone, and the labour the chart has no rate for — for one invoice line.
@@ -102,7 +103,7 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead className="text-slate-500 bg-slate-50">
-                <tr><Th>Charge</Th><Th right>Invoiced</Th><Th right>Chart rate</Th><Th right>Chart amount</Th><Th right>Diff Amount</Th><Th right>Diff %</Th><Th>Note</Th></tr>
+                <tr><Th>Charge</Th><Th right side="invoice">Invoiced</Th><Th right side="chart">Chart rate</Th><Th right side="chart">Chart amount</Th><Th right side="diff">Diff Amount</Th><Th right side="diff">Diff %</Th><Th>Note</Th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {metal.charges.map((c) => {
@@ -110,11 +111,11 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
                   return (
                     <tr key={c.code} className={compared ? '' : 'text-slate-500'}>
                       <td className="px-3 py-1.5">{c.name}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums">{fmtNum(c.invoiced)}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums">{c.chartRate != null ? fmtNum(c.chartRate, 4) : '—'}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums"><ChartAmount value={c.chartAmount} calc={calcs?.charges[c.code]} currency={currency} empty="—" /></td>
-                      <td className="px-3 py-1.5 text-right">{compared ? <Variance value={c.invoiced - c.chartAmount!} /> : '—'}</td>
-                      <td className="px-3 py-1.5 text-right">{compared ? <VariancePct pct={variancePct(c.invoiced, c.chartAmount!)} /> : '—'}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.invoice.cell}`}>{fmtNum(c.invoiced)}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}>{c.chartRate != null ? fmtNum(c.chartRate, 4) : '—'}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}><ChartAmount value={c.chartAmount} calc={calcs?.charges[c.code]} currency={currency} empty="—" /></td>
+                      <td className={`px-3 py-1.5 text-right ${SIDE.diff.cell}`}>{compared ? <Variance value={c.invoiced - c.chartAmount!} /> : '—'}</td>
+                      <td className={`px-3 py-1.5 text-right ${SIDE.diff.cell}`}>{compared ? <VariancePct pct={variancePct(c.invoiced, c.chartAmount!)} /> : '—'}</td>
                       <td className="px-3 py-1.5 text-xs">{c.note ?? (c.invoiced === 0 && c.chartAmount != null ? 'Not invoiced — not counted' : '')}</td>
                     </tr>
                   );
@@ -142,7 +143,7 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
               <thead className="text-slate-500 bg-slate-50">
                 <tr>
                   <Th>Commodity</Th><Th>Shape</Th><Th right>Pcs</Th><Th right>ct/stone</Th><Th>mm</Th><Th>Chart size</Th><Th>Setting type</Th>
-                  <Th right>Chart rate</Th><Th right>Chart amount</Th><Th right>On stone</Th><Th>Note</Th>
+                  <Th right side="chart">Chart rate</Th><Th right side="chart">Chart amount</Th><Th right side="invoice">On stone</Th><Th>Note</Th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -158,9 +159,9 @@ export default function LineComparisonDetail({ comparison, currency, calcs }: { 
                       {s.settingType ? SETTING_TYPE_NAMES[s.settingType] ?? s.settingType : '—'}
                       {s.settingTypeAssumed && <span className="text-xs text-slate-500"> (default)</span>}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{s.chartRate != null ? fmtNum(s.chartRate, 3) : '—'}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums"><ChartAmount value={s.chartAmount} calc={calcs?.stones[s.componentId]} currency={currency} empty="—" /></td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{s.invoiced ? fmtNum(s.invoiced) : '—'}</td>
+                    <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}>{s.chartRate != null ? fmtNum(s.chartRate, 3) : '—'}</td>
+                    <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.chart.cell}`}><ChartAmount value={s.chartAmount} calc={calcs?.stones[s.componentId]} currency={currency} empty="—" /></td>
+                    <td className={`px-3 py-1.5 text-right tabular-nums ${SIDE.invoice.cell}`}>{s.invoiced ? fmtNum(s.invoiced) : '—'}</td>
                     <td className="px-3 py-1.5 text-xs text-amber-800">{s.issue ? STONE_ISSUE_TEXT[s.issue] : ''}</td>
                   </tr>
                 ))}

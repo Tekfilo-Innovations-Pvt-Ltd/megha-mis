@@ -47,7 +47,7 @@ const line = (invDetId: number, stones: StoneInput[]): LineInput => ({
 
 const info = (invDetId: number, invNo: string, invDt: string): [number, LineInfo] => [
   invDetId,
-  { invDetId, invId: invDetId, invNo, invDt, factoryId: 1, factoryName: 'F', jewNo: `J${invDetId}`, skuNo: null, soNo: null, bagNo: null, size: null, jobCategory: null, grossWt: null, componentSettingNotCounted: 0 },
+  { invDetId, invId: invDetId, invNo, invDt, factoryId: 1, factoryName: 'F', jewNo: `J${invDetId}`, skuNo: null, soNo: null, bagNo: null, size: null, jobCategory: null, grossWt: null, componentSettingNotCounted: 0, metalType: 'GOLD' },
 ];
 
 describe('findMissingStones / groupMissingStones', () => {

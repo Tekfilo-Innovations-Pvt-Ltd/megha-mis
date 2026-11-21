@@ -10,6 +10,7 @@ import {
 import { listInvoiceFactories, listLineJobCategories, listLineProductTypes, loadComparisonLines, type LineFilter, type LineInfo } from '@/lib/labourComparisonData';
 import { buildLotGroup } from '@/lib/labourLotReport';
 import type { PriceChart } from '@/lib/priceChart';
+import { metalTypeLabel } from '@/lib/metalType';
 
 // "Labour vs Chart" report: every invoice line in the filter compared with the
 // price chart, summarised, plus one page of line rows.
@@ -283,6 +284,7 @@ export async function buildLabourReport(
       .sort((a, b) => b.lines - a.lines),
     byProductType: bucket(rows, (r) => r.productType ?? '(none)'),
     byFactory: bucket(rows, (r) => r.factoryName),
+    byMetalType: bucket(rows, (r) => metalTypeLabel(r.metalType)),
   };
 
   const sorted = applyView(rows, view);
