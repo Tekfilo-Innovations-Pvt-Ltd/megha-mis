@@ -13,6 +13,7 @@ import ChartAmount from '@/components/labour/ChartAmount';
 import StoneCorrectionsBar from '@/components/labour/StoneCorrectionsBar';
 import SettingTypesPanel from '@/components/labour/SettingTypesPanel';
 import type { SkuContext } from '@/components/labour/SkuOtherCompanies';
+import SkuHint from '@/components/labour/SkuHint';
 import type { ChartCalc, LineCalcs } from '@/lib/chartCalc';
 import type { LabourReport, LotReport, ReportSort, ReportStatusFilter } from '@/lib/labourReport';
 import type { LineComparison } from '@/lib/labourComparison';
@@ -580,7 +581,7 @@ export default function LabourVsChartPage() {
           <>
             {tableView === 'skus' ? (
               <div className={`overflow-x-auto ${report.isFetching ? 'opacity-60' : ''}`}>
-                {data.skus ? <SkuTable skus={data.skus} onOpenSku={openSku} /> : <p className="px-4 py-3 text-sm text-slate-500">Grouping by SKU…</p>}
+                {data.skus ? <SkuTable skus={data.skus} onOpenSku={openSku} chartCode={data.chart.code} currency={currency} /> : <p className="px-4 py-3 text-sm text-slate-500">Grouping by SKU…</p>}
               </div>
             ) : tableView === 'lots' ? (
               <div className={`overflow-x-auto ${lots.isFetching ? 'opacity-60' : ''}`}>
@@ -643,7 +644,7 @@ export default function LabourVsChartPage() {
                               <span className="block text-xs text-slate-500">{fmtDate(r.invDt)} · {r.factoryName}</span>
                             </td>
                           )}
-                          {show('jewellery') && <td className="px-3 py-2">{r.jewNo}{r.bagNo && <span className="block text-xs text-slate-500">Bag {r.bagNo}</span>}{r.skuNo &&<span className="block text-xs text-slate-500">{r.skuNo}</span>}</td>}
+                          {show('jewellery') && <td className="px-3 py-2">{r.jewNo}{r.bagNo && <span className="block text-xs text-slate-500">Bag {r.bagNo}</span>}{r.skuNo && <span className="block text-xs text-slate-500">{r.skuNo}<SkuHint context={lineSku(r)} currency={currency} /></span>}</td>}
                           {show('metalType') && <td className="px-3 py-2 whitespace-nowrap">{metalTypeLabel(r.metalType)}</td>}
                           {show('productType') && <td className="px-3 py-2">{r.productType ?? '—'}</td>}
                           {show('qty') && <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.qty, 0)}</td>}

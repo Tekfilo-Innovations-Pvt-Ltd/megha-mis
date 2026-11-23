@@ -2,6 +2,12 @@ import { compareLine, type ComparisonOptions } from '@/lib/labourComparison';
 import { loadComparisonLines } from '@/lib/labourComparisonData';
 import type { PriceChart } from '@/lib/priceChart';
 import type { CompanyOption } from '@/lib/company';
+import erp from '@/lib/erp';
+import { buildLabourBreakup } from '@/lib/labourLotReport';
+import { labourTypeOf } from '@/lib/labourTypes';
+import { skuKey, skuVariants } from '@/lib/skuBase';
+
+export { baseSku, skuVariants } from '@/lib/skuBase';
 
 // What other companies' factories invoiced for the same SKU — e.g. an AAA line's
 // SKU at RTPHK — per piece, so the chart labour pop-up can set them side by
@@ -25,6 +31,22 @@ export interface SkuLine {
   settingPerPc: number | null;
   otherPerPc: number | null; // metal labour and the rest
   chartPerPc: number | null; // chart labour of the compared part, per piece
+  breakup: SkuBreakupRow[]; // the line's labour breakup, as in Job Work
+}
+
+// One row of an invoice line's labour breakup (the factory's labour table, plus
+// setting recorded on the stones), with its chart amount.
+export interface SkuBreakupRow {
+  process: string;
+  labourType: string; // to set factories that name processes differently side by side
+  qty: number | null;
+  rate: number | null;
+  amount: number;
+  perPc: number | null;
+  inputCurrency: string | null;
+  inputRate: number | null;
+  inputAmount: number | null;
+  chartAmount: number | null;
 }
 
 export interface SkuCompany {
@@ -34,12 +56,10 @@ export interface SkuCompany {
   totalLines: number;
   // Per piece over every line with that SKU (weighted by quantity), per currency.
   averages: { currency: string; qty: number; labourPerPc: number; settingPerPc: number; otherPerPc: number }[];
+  // Labour per piece by labour type over every line, in the company's main currency.
+  byType: { currency: string; types: { labourType: string; perPc: number }[] } | null;
 }
 
-// AAA clones some RTPHK SKUs with "-A" added (NR132911RP75 → NR132911RP75-A);
-// both count as the same SKU.
-export const baseSku = (sku: string) => sku.trim().replace(/-A$/i, '');
-export const skuVariants = (sku: string) => [baseSku(sku), `${baseSku(sku)}-A`];
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
@@ -70,6 +90,24 @@ export async function skuInOtherCompanies(
       const setting = c.setting.invoiced;
       const grams = l.metal.reduce((s, m) => s + m.grams, 0);
       const per = (v: number) => (l.qty > 0 ? r2(v / l.qty) : null);
+      const breakup = buildLabourBreakup(l, c, chart)
+        .filter((x) => (x.invoiceAmount ?? 0) !== 0)
+        .map((x): SkuBreakupRow => {
+          const src = x.sources ?? [];
+          const oneInput = new Set(src.map((s) => s.inputCurrency)).size === 1 ? src[0]?.inputCurrency ?? null : null;
+          return {
+            process: x.process,
+            labourType: labourTypeOf(x.process),
+            qty: src.length ? src.reduce((s, y) => s + (y.qty ?? 0), 0) : null,
+            rate: x.invoiceRate ?? null,
+            amount: r2(x.invoiceAmount ?? 0),
+            perPc: per(x.invoiceAmount ?? 0),
+            inputCurrency: oneInput,
+            inputRate: src.length === 1 ? src[0].inputRate : null,
+            inputAmount: oneInput ? r2(src.reduce((s, y) => s + (y.inputAmount ?? 0), 0)) : null,
+            chartAmount: x.chartAmount != null ? r2(x.chartAmount) : null,
+          };
+        });
       return {
         invId: i.invId,
         invNo: i.invNo,
@@ -85,6 +123,7 @@ export async function skuInOtherCompanies(
         settingPerPc: per(setting),
         otherPerPc: per(labour - setting),
         chartPerPc: c.status === 'NOT_COMPARABLE' ? null : per(c.chartTotal),
+        breakup,
         labour,
         setting,
       };
@@ -97,11 +136,20 @@ export async function skuInOtherCompanies(
       a.setting += r.setting;
       byCurrency.set(r.currency, a);
     }
+    // By labour type, over every line in the currency with the most pieces.
+    const main = Array.from(byCurrency).sort((a, b) => b[1].qty - a[1].qty)[0];
+    let byType: SkuCompany['byType'] = null;
+    if (main && main[1].qty > 0) {
+      const types = new Map<string, number>();
+      for (const r of rows) if (r.currency === main[0]) for (const x of r.breakup) types.set(x.labourType, (types.get(x.labourType) ?? 0) + x.amount);
+      byType = { currency: main[0], types: Array.from(types, ([labourType, amount]) => ({ labourType, perPc: r2(amount / main[1].qty) })).sort((a, b) => b.perPc - a.perPc) };
+    }
     out.push({
       companyId: co.id,
       company: co.name,
       lines: rows.slice(0, limit).map(({ labour: _l, setting: _s, ...r }) => r), // already newest first
       totalLines: rows.length,
+      byType,
       averages: Array.from(byCurrency, ([currency, a]) => ({
         currency,
         qty: a.qty,
@@ -112,4 +160,28 @@ export async function skuInOtherCompanies(
     });
   }
   return out;
+}
+
+// Every SKU (base, "-A" folded in) invoiced in the given companies, with each
+// company's line count — what the SKU hint icons in the report look up.
+export async function skuIndex(companies: CompanyOption[]): Promise<Record<string, { companyId: number; company: string; lines: number }[]>> {
+  if (companies.length === 0) return {};
+  const names = new Map(companies.map((c) => [c.id, c.name]));
+  const rows = await erp.$queryRaw<{ company_id: number; sku: string; lines: number }[]>`
+    SELECT m.company_id, upper(trim(s.sku_no)) AS sku, count(*)::int AS lines
+      FROM tbl_factory_invoice_det d
+      JOIN tbl_factory_invoice_main m ON m.inv_id = d.inv_id
+      JOIN tbl_jewellery j ON j.jew_id = d.jew_id
+      JOIN tbl_sku s ON s.sku_id = j.sku_id
+     WHERE m.company_id = ANY(${companies.map((c) => c.id)}::int[]) AND m.is_deleted = 0 AND d.is_deleted = 0
+       AND trim(coalesce(s.sku_no, '')) <> ''
+     GROUP BY 1, 2`;
+  const index: Record<string, { companyId: number; company: string; lines: number }[]> = {};
+  for (const r of rows) {
+    const list = (index[skuKey(r.sku)] ??= []);
+    const hit = list.find((x) => x.companyId === r.company_id);
+    if (hit) hit.lines += r.lines;
+    else list.push({ companyId: r.company_id, company: names.get(r.company_id) ?? `Company ${r.company_id}`, lines: r.lines });
+  }
+  return index;
 }

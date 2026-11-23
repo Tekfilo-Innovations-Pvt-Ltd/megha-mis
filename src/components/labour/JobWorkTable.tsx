@@ -11,6 +11,7 @@ import ChartAmount from '@/components/labour/ChartAmount';
 import InvoiceLabourAmount from '@/components/labour/InvoiceLabourAmount';
 import { SIDE } from '@/components/labour/sides';
 import type { SkuContext } from '@/components/labour/SkuOtherCompanies';
+import SkuHint from '@/components/labour/SkuHint';
 import type { ColumnDef, HiddenColumns } from '@/components/labour/columns';
 
 // "Job Work" view of the labour-vs-chart report, in the layout of the ERP's
@@ -46,7 +47,7 @@ type Block = ReturnType<typeof jobWorkBlock>;
 type Totals = ReturnType<typeof jobWorkTotals>;
 
 // Columns of the jewellery (one cell spanning its block).
-const LINE_COLS: { key: string; label: string; hidden?: boolean; cls: string; render: (l: LotLine, sNo: number) => ReactNode; total?: (t: Totals) => ReactNode }[] = [
+const LINE_COLS: { key: string; label: string; hidden?: boolean; cls: string; render: (l: LotLine, sNo: number, sku?: SkuContext) => ReactNode; total?: (t: Totals) => ReactNode }[] = [
   { key: 'sNo', label: 'S.No', cls: `${text} w-10`, render: (_, n) => n },
   {
     key: 'invNo', label: 'Job Work Invoice No', cls: `${text} whitespace-nowrap`,
@@ -56,7 +57,7 @@ const LINE_COLS: { key: string; label: string; hidden?: boolean; cls: string; re
   { key: 'soNo', label: 'SO No', hidden: true, cls: `${text} whitespace-nowrap`, render: (l) => l.soNo },
   { key: 'jobNo', label: 'Job No', cls: `${text} whitespace-nowrap font-semibold text-slate-900`, render: (l) => l.jewNo },
   { key: 'bagNo', label: 'Bag No', hidden: true, cls: `${text} whitespace-nowrap`, render: (l) => l.bagNo },
-  { key: 'sku', label: 'SKU No', cls: `${text} whitespace-nowrap`, render: (l) => l.skuNo },
+  { key: 'sku', label: 'SKU No', cls: `${text} whitespace-nowrap`, render: (l, _n, sku) => <>{l.skuNo}<SkuHint context={sku} /></> },
   { key: 'category', label: 'Jewellery Category', cls: text, render: (l) => l.productType },
   { key: 'metalType', label: 'Metal Type', cls: `${text} whitespace-nowrap`, render: (l) => metalTypeLabel(l.metalType) },
   { key: 'size', label: 'Size', hidden: true, cls: text, render: (l) => l.size },
@@ -181,7 +182,7 @@ export default function JobWorkTable({
           // Stones stack in one group here, so a block can be taller than the ERP layout's.
           const height = Math.max(1, l.metals.length, stones.length, b.labour.length);
           // Every chart amount of this jewellery also shows the same SKU in the user's other companies.
-          const skuCtx: SkuContext | undefined = chartCode && l.skuNo ? { skuNo: l.skuNo, chartCode, qty: l.qty, invoicedLabour: b.invoiceTotal ?? 0, chart: b.chartTotal ?? null, gramsPerPiece: l.qty > 0 && l.netWt > 0 ? l.netWt / l.qty : null } : undefined;
+          const skuCtx: SkuContext | undefined = chartCode && l.skuNo ? { skuNo: l.skuNo, chartCode, qty: l.qty, invoicedLabour: b.invoiceTotal ?? 0, chart: b.chartTotal ?? null, gramsPerPiece: l.qty > 0 && l.netWt > 0 ? l.netWt / l.qty : null, breakup: b.labour.map((x) => ({ process: x.process, amount: x.invoiceAmount ?? 0 })) } : undefined;
           return (
             <Fragment key={l.invDetId}>
               {Array.from({ length: height }, (_, k) => {
@@ -190,7 +191,7 @@ export default function JobWorkTable({
                 const xMissing = x ? missingSide(x) : null;
                 return (
                   <tr key={k} className={`${k === 0 ? BLOCK_START : ''} ${i % 2 ? 'bg-slate-100' : 'bg-white'}`}>
-                    {k === 0 && lineCols.map((c) => <td key={c.key} rowSpan={height} className={c.cls}>{c.render(l, startIndex + i + 1)}</td>)}
+                    {k === 0 && lineCols.map((c) => <td key={c.key} rowSpan={height} className={c.cls}>{c.render(l, startIndex + i + 1, skuCtx)}</td>)}
                     {metalCols.map((c) => <td key={c.key} className={c.cls}>{c.render(m)}</td>)}
                     {stoneCells(stones[k], skuCtx)}
                     {show('labourType') && <td className={`${text} whitespace-nowrap`}>{x?.process ?? ''}</td>}

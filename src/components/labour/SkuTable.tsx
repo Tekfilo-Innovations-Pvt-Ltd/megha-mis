@@ -5,6 +5,7 @@ import { fmtDate, fmtNum } from '@/lib/format';
 import { Variance, VariancePct } from '@/components/labour/LineComparisonDetail';
 import ChartAmount from '@/components/labour/ChartAmount';
 import { chartCalc } from '@/lib/chartCalc';
+import SkuHint from '@/components/labour/SkuHint';
 import { SIDE } from '@/components/labour/sides';
 
 // A SKU's chart amount is its comparable lines' chart labour added up; the
@@ -40,7 +41,7 @@ const perPcCalc = (s: SkuRow) =>
       );
 
 // The report grouped by SKU: each SKU's lines added up. Clicking a SKU shows its lines.
-export default function SkuTable({ skus, onOpenSku }: { skus: SkuRow[]; onOpenSku: (skuNo: string) => void }) {
+export default function SkuTable({ skus, onOpenSku, chartCode, currency }: { skus: SkuRow[]; onOpenSku: (skuNo: string) => void; chartCode?: string; currency?: string }) {
   const th = 'px-3 py-1.5 font-medium whitespace-nowrap';
   const td = 'px-3 py-2 text-right tabular-nums';
   return (
@@ -65,9 +66,12 @@ export default function SkuTable({ skus, onOpenSku }: { skus: SkuRow[]; onOpenSk
           <tr key={s.skuNo ?? ''} className="border-t border-slate-100 align-top">
             <td className="pl-4 pr-3 py-2 whitespace-nowrap">
               {s.skuNo ? (
-                <button onClick={() => onOpenSku(s.skuNo!)} className="font-medium text-amber-700 hover:underline" title="Show this SKU's lines">
-                  {s.skuNo}
-                </button>
+                <>
+                  <button onClick={() => onOpenSku(s.skuNo!)} className="font-medium text-amber-700 hover:underline" title="Show this SKU's lines">
+                    {s.skuNo}
+                  </button>
+                  <SkuHint context={chartCode ? { skuNo: s.skuNo, chartCode, qty: s.qty, invoicedLabour: s.invoiced, chart: s.chart, gramsPerPiece: null } : undefined} currency={currency} />
+                </>
               ) : (
                 <span className="text-slate-500">(no SKU)</span>
               )}

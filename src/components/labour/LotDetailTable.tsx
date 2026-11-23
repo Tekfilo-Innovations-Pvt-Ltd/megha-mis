@@ -12,6 +12,7 @@ import { StatusLabel, Variance } from '@/components/labour/LineComparisonDetail'
 import { SIDE } from '@/components/labour/sides';
 import type { ColumnDef, HiddenColumns } from '@/components/labour/columns';
 import type { SkuContext } from '@/components/labour/SkuOtherCompanies';
+import SkuHint from '@/components/labour/SkuHint';
 
 // Lot detail of the labour-vs-chart report: each invoice line's columns on its
 // first row, then one row per metal charge / stone lot.
@@ -65,9 +66,9 @@ export const LOT_DETAIL_COLUMNS: ColumnDef[] = [
 ];
 
 // The line's SKU and figures for the chart pop-up's same-SKU comparison.
-const skuOf = (l: LotReport['groups'][number]['line'], rows: LotReport['groups'][number]['rows'], chartCode?: string): SkuContext | undefined =>
+const skuOf = (l: LotReport['groups'][number]['line'], rows: LotReport['groups'][number]['rows'], chartCode?: string, labour?: LotReport['groups'][number]['labour']): SkuContext | undefined =>
   chartCode && l.skuNo
-    ? { skuNo: l.skuNo, chartCode, qty: l.qty, invoicedLabour: rows.reduce((s, r) => s + (r.invoiceAmount ?? 0), 0), chart: rows.reduce((s, r) => s + (r.chartAmount ?? 0), 0), gramsPerPiece: l.qty > 0 && l.netWt > 0 ? l.netWt / l.qty : null }
+    ? { skuNo: l.skuNo, chartCode, qty: l.qty, invoicedLabour: rows.reduce((s, r) => s + (r.invoiceAmount ?? 0), 0), chart: rows.reduce((s, r) => s + (r.chartAmount ?? 0), 0), gramsPerPiece: l.qty > 0 && l.netWt > 0 ? l.netWt / l.qty : null, breakup: labour?.map((x) => ({ process: x.process, amount: x.invoiceAmount ?? 0 })) }
     : undefined;
 
 const ROW_COLUMNS = ['lotCode', 'commodity', 'item', 'qtyWt', 'pcs', 'invRate', 'invAmt', 'chartRate', 'chartAmt', 'diff', 'diffPct'];
@@ -108,7 +109,7 @@ export default function LotDetailTable({ groups, hidden, chartCode }: { groups: 
         </tr>
       </thead>
       <tbody>
-        {groups.map(({ line: l, rows, status }, g) => (
+        {groups.map(({ line: l, rows, status, labour }, g) => (
           <Fragment key={l.invDetId}>
             {rows.map((r, i) => (
               <tr key={i} className={`${i === 0 ? 'border-t-[3px] border-t-slate-600' : 'border-t border-slate-200'} ${g % 2 ? 'bg-slate-100' : 'bg-white'} ${r.kind === 'OTHER' ? 'text-slate-500' : ''} align-top`}>
@@ -134,7 +135,7 @@ export default function LotDetailTable({ groups, hidden, chartCode }: { groups: 
                         <span className="block text-slate-500">{l.productType ?? ''}</span>
                       </td>
                     )}
-                    {show('sku') && <td className="px-2 py-1.5 whitespace-nowrap" rowSpan={rows.length}>{l.skuNo ?? '—'}</td>}
+                    {show('sku') && <td className="px-2 py-1.5 whitespace-nowrap" rowSpan={rows.length}>{l.skuNo ?? '—'}<SkuHint context={skuOf(l, rows, chartCode, labour)} /></td>}
                     {show('jobCategory') && (
                       <td className="px-2 py-1.5 whitespace-nowrap" rowSpan={rows.length}>
                         {/* Repair jobs are not new-make labour — make them stand out */}
@@ -191,7 +192,7 @@ export default function LotDetailTable({ groups, hidden, chartCode }: { groups: 
                 {show('invRate') && <td className={`${td} text-right ${SIDE.invoice.cell}`}>{num(r.invoiceRate, 4)}</td>}
                 {show('invAmt') && <td className={`${td} text-right ${SIDE.invoice.cell}`}>{num(r.invoiceAmount, 2)}</td>}
                 {show('chartRate') && <td className={`${td} text-right ${SIDE.chart.cell}`}>{num(r.chartRate, 4)}</td>}
-                {show('chartAmt') && <td className={`${td} text-right ${SIDE.chart.cell}`}><ChartAmount value={r.chartAmount} calc={r.chartCalc} empty="—" sku={skuOf(l, rows, chartCode)} /></td>}
+                {show('chartAmt') && <td className={`${td} text-right ${SIDE.chart.cell}`}><ChartAmount value={r.chartAmount} calc={r.chartCalc} empty="—" sku={skuOf(l, rows, chartCode, labour)} /></td>}
                 {show('diff') && <td className={`${td} text-right whitespace-nowrap ${SIDE.diff.cell}`}>{r.variance == null ? '—' : <Variance value={r.variance} />}</td>}
                 {show('diffPct') && (
                   <td className={`${td} pr-4 text-right whitespace-nowrap ${SIDE.diff.cell} ${(r.variancePct ?? 0) > 0 ? 'text-red-700' : (r.variancePct ?? 0) < 0 ? 'text-sky-700' : ''}`}>

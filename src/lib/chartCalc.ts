@@ -25,6 +25,9 @@ export interface ChartCalcPart {
   steps: ChartCalcStep[];
   formula: string | null; // "0.21 × 384 pcs"; null for a part that is itself a total
   amount: number;
+  // A stone part: what decides its rate (parts with the same key are combined
+  // into one), and the quantities to add up when they are.
+  stone?: { key: string; rate: number; pieces: number; carats: number | null; rows: number };
 }
 
 export interface ChartCalc {
@@ -113,7 +116,55 @@ export function stonePart(st: StoneComparison, chart: PriceChart): ChartCalcPart
     steps,
     formula: `${n(st.chartRate)} × ${pcs(st.pieces)}`,
     amount: st.chartAmount,
+    stone: {
+      // Everything that picks the chart row and rate; the MM size only when it picked the size row.
+      key: [st.commodity, st.shape, st.lotCode, st.chartCommodity, st.rateGroup, st.pricedAsShape, st.sizeLabel, byWeight ? '' : st.mmSize, st.settingType, st.settingTypeSource, st.chartRate].join('|'),
+      rate: st.chartRate,
+      pieces: st.pieces,
+      carats: st.carats,
+      rows: 1,
+    },
   };
+}
+
+// The ERP keeps one component per stone position, so a line can have many
+// stone parts that differ only in pieces. Parts with the same stone, chart row,
+// setting type and rate are shown once, pieces and amount added up; a part
+// stays separate only when one of those differs.
+function combineStoneParts(parts: ChartCalcPart[]): ChartCalcPart[] {
+  const out: ChartCalcPart[] = [];
+  const byKey = new Map<string, ChartCalcPart>();
+  for (const p of parts) {
+    if (!p.stone) {
+      out.push(p);
+      continue;
+    }
+    const key = `${p.title}|${p.stone.key}`;
+    const hit = byKey.get(key);
+    if (!hit) {
+      const copy = { ...p, steps: [...p.steps], stone: { ...p.stone } };
+      byKey.set(key, copy);
+      out.push(copy);
+      continue;
+    }
+    const s = hit.stone!;
+    s.pieces += p.stone.pieces;
+    s.carats = s.carats != null && p.stone.carats != null ? s.carats + p.stone.carats : null;
+    s.rows += p.stone.rows;
+    hit.amount = r4(hit.amount + p.amount);
+  }
+  for (const p of Array.from(byKey.values())) {
+    const s = p.stone!;
+    if (s.rows === 1) continue;
+    p.formula = `${n(s.rate)} × ${pcs(s.pieces)}`;
+    p.steps = p.steps.map((step) =>
+      step.label === 'Weight per stone' && s.carats != null && s.pieces > 0
+        ? { ...step, value: `${n(s.carats, 3, 3)} ct ÷ ${pcs(s.pieces)} = ${n(s.carats / s.pieces, 4, 4)} ct/stone` }
+        : step,
+    );
+    p.steps.push({ label: 'Combined', value: `${s.rows} stone rows with the same stone, chart row, setting type and rate` });
+  }
+  return out;
 }
 
 // A combined labour row ("CPF+ Setting + Rhodium"): the chart amounts of its
@@ -126,7 +177,7 @@ export function combinedCalc(x: CombinedComparison, c: LineComparison, line: Pic
 
 // A calc from its parts; null when there is nothing to explain.
 export function chartCalc(title: string, parts: (ChartCalcPart | null | undefined)[], total?: number | null, note?: string): ChartCalc | null {
-  const kept = parts.filter((p): p is ChartCalcPart => p != null);
+  const kept = combineStoneParts(parts.filter((p): p is ChartCalcPart => p != null));
   if (kept.length === 0) return null;
   return { title, parts: kept, total: total ?? r4(kept.reduce((s, p) => s + p.amount, 0)), ...(note ? { note } : {}) };
 }
